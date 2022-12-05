@@ -32,7 +32,12 @@ string? s = Console.ReadLine();
 
 while (s=="1")
 {
-    await client.FindService(client.Options.ServiceName, client.Options.Scope);
+    var respone = await client.FindService(client.Options.ServiceName, client.Options.Scope);
+
+    foreach (var r in respone.Services)
+    {
+        Console.WriteLine($"Found = {r.ServiceName}, {r.ServiceHost}, {r.ServicePort}, {r.Scope}");
+    }
 
     Console.WriteLine("1 for as for service");
     s = Console.ReadLine();

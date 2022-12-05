@@ -21,7 +21,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         private readonly Timer _tempo;
         private States _currentState;
         private int _refreshTime;
-        private readonly MulticastClient _multicastClient;
+        private readonly IMulticastClient _multicastClient;
         private readonly IEnumerable<IMetadataProvider> _metadataProviders;
 
         public enum States
@@ -53,7 +53,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         public ServiceDiscoveryClient(
             ILogger<ServiceDiscoveryClient> logger,
             ClientConfigurationOptions options,
-            MulticastClient multicastClient,
+            IMulticastClient multicastClient,
             IEnumerable<IMetadataProvider> metadataProviders)
         {
             Logger = logger;

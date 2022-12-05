@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using Grpc.Core;
@@ -14,17 +12,9 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
     /// </summary>
     public sealed class ServiceDiscoveryServer : DiscoveryService.DiscoveryServiceBase, IDisposable
     {
-        /// <summary>
-        /// Server manager logic.
-        /// </summary>
         private readonly ServerManagerLogic _logic;
-
-        /// <summary>
-        /// Grpc Server.
-        /// </summary>
         private Server _server;
-
-        private readonly MulticastClient _client;
+        private readonly IMulticastClient _client;
         private readonly Timer _tempo;
 
         /// <summary>
@@ -38,7 +28,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             ILogger<ServiceDiscoveryServer> logger,
             ServerManagerLogic logic,
             ServiceConfigurationOptions options,
-            MulticastClient client)
+            IMulticastClient client)
         {
             Logger = logger;
             Logger.BeginScope(nameof(ServiceDiscoveryServer));
@@ -62,7 +52,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
 
         /// <summary>
         /// Gets or sets the Logger.
-        /// <remarks>I hardly tried to make this be auto injected by autofixture with no success.</remarks>
+        /// <remarks>I hardly tried to make this be auto injected by auto-fixture with no success.</remarks>
         /// </summary>
         public ILogger<ServiceDiscoveryServer> Logger { get; set; }
 

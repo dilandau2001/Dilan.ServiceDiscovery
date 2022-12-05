@@ -17,7 +17,7 @@
 
         public ILogger<T> CreateLogger<T>()
         {
-            return new XUnitLogger<T>(_testOutputHelper, _scopeProvider, typeof(T).FullName);
+            return new XUnitLogger<T>(_testOutputHelper, _scopeProvider, typeof(T).FullName ?? string.Empty);
         }
 
         public void Dispose()

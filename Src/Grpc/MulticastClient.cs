@@ -11,7 +11,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
     /// <summary>
     /// Class for Multicast communication
     /// </summary>
-    public sealed class MulticastClient : IDisposable
+    public sealed class MulticastClient : IDisposable, IMulticastClient
     {
         #region FIELDS
 

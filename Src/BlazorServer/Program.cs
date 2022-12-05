@@ -24,7 +24,7 @@ builder.Services.AddSingleton<ServiceDiscoveryServer>();
 builder.Services.AddSingleton(options);
 builder.Services.AddSingleton<ServerManagerLogic>();
 builder.Services.AddSingleton<ServiceDiscoveryService>();
-builder.Services.AddSingleton<MulticastClient>();
+builder.Services.AddSingleton<IMulticastClient, MulticastClient>();
 
 // Build container
 var app = builder.Build();
