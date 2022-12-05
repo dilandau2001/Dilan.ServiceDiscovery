@@ -1,0 +1,89 @@
+﻿@page "/services"
+@using Dilan.GrpcServiceDiscovery.BlazorServer.Data
+@using Dilan.GrpcServiceDiscovery.Grpc
+@inject ServiceDiscoveryService Service
+
+<PageTitle>Services</PageTitle>
+
+<h1>Services lists</h1>
+<p>This table shows real time status of registered clients.</p>
+
+<p>Click here to clean offline services.
+    <button @onclick="ClearOffline">
+        Clear
+    </button>
+
+</p>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Service Name</th>
+        <th>Address</th>
+        <th>Port</th>
+        <th>Scope</th>
+        <th>Heath</th>
+        <th>Metadata</th>
+        <th>Last Update</th>
+        <th>Enabled</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Service.ServiceDictionary.Values)
+    {
+        <tr style="background: @GetColorFromEnabled(item)">
+            <td>@item.ServiceName</td>
+            <td>@item.Address</td>
+            <td>@item.Port</td>
+            <td>@item.Scope</td>
+            <td style="background: @GetColorFromHealthState(item)">@item.HealthState</td>
+            <td><pre>@string.Join("\n", item.Metadata)</pre></td>
+            <td>@item.LastRefreshTime.LocalDateTime</td>
+            <td><input type="checkbox" @bind="@item.Enabled"></td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@code {
+    protected override Task OnInitializedAsync()
+    {
+        Service.ServiceModelListChanged += ServiceOnServiceModelListChanged;
+        return Task.CompletedTask;
+    }
+
+    private string GetColorFromHealthState(ServiceModel model)
+    {
+        switch (model.HealthState)
+        {
+            case EnumServiceHealth.Healthy:
+                return "lightgreen";
+            case EnumServiceHealth.Unhealthy:
+                return "lightred";
+            case EnumServiceHealth.Offline:
+                return "gray";
+            case EnumServiceHealth.Starting:
+                return "lightyellow";
+
+            default:
+                return "white";
+        }
+    }
+
+    private string GetColorFromEnabled(ServiceModel model)
+    {
+        return model.Enabled ? "white" : "lightgray";
+    }
+
+    private void ServiceOnServiceModelListChanged(object? sender, EventArgs e)
+    {
+        // Tell web to update.
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ClearOffline()
+    {
+        Service.Clear();
+    }
+
+}

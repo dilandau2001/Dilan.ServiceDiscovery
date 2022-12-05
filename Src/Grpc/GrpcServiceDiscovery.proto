@@ -1,0 +1,102 @@
+﻿syntax = "proto3";
+option csharp_namespace = "Dilan.GrpcServiceDiscovery.Grpc";
+package DiscoveryService;
+
+// Service definition        
+service DiscoveryService
+{
+    // Call to register a service.
+    // This must be called by server clients on start and repeatedly during operation.
+    rpc RegisterService(ServiceDto) returns (RegisterServiceResponse);
+
+    // Call service to retrieve all services with service name.
+    rpc FindService(FindServiceRequest) returns (FindServiceResponse);
+}
+
+// Service Health Enumeration.
+enum EnumServiceHealth
+{
+    // Server is starting.
+    Starting = 0;
+
+    // Server is Healthy and ready for requests.
+    Healthy = 1;
+
+    // Server has started but it is not ready or it is failed.
+    Unhealthy = 2;
+
+    // Server is offline.
+    Offline = 3;
+}
+
+message ServiceDto
+{
+    // Service name
+    // Name of the service that is used to identify this type of service among all others.
+    string ServiceName = 1;
+
+    // Service port.
+    // GRPC port this service is listening.
+    int32 ServicePort = 2;
+
+    // Service host name.
+    // This is either an ip or a host name that other clients should use to reach the service.
+    string ServiceHost = 3;
+
+    // Service health.
+    // The client will tell the service if it is healthy.
+    // If healthy it means that it is prepared to receive calls.
+    EnumServiceHealth HealthState = 4;
+
+    // Service metadata. Dictionary with string keys and values.
+    // Anything usefull open to the developer desired.
+    // This could be, running time, sub health status, health check results or anything worth registering.
+    map<string, string> Metadata = 5;
+
+    // String that describes or relates several services belonging to the same environment.
+    string Scope = 6;
+}
+
+// Response of the service request.
+message RegisterServiceResponse
+{
+    // Call response
+    // If the response is ok, then true. If response is not correct then false.
+    bool Ok = 1;
+
+    // Refresh rate.
+    // The server will tell the client how often the client must call register.
+    int32 RefreshRateSeconds = 2;
+
+    // Service Id that the service discovery is giving to this client, so this client has a unique id.
+    string ServiceId = 3;
+
+    // Error text.
+    // When call response is false, may the server fill why.
+    string Error = 4;
+}
+
+// Name of the service to search.
+message FindServiceRequest
+{
+    // Name of the service to search.
+    string Name = 1;
+
+    // Scope of the service. If empty the parameter is not used for filtering the result.
+    string Scope = 2;
+}
+
+// Response of the request.
+message FindServiceResponse
+{
+    // Call response
+    // If the response is ok, then true. If response is not correct then false.
+    bool Ok = 1;
+
+    // Error text.
+    // When call response is false, may the server fill why.
+    string Error = 2;
+
+    // List of services that respond to the service name requested.
+    repeated ServiceDto Services = 3;
+}

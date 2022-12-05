@@ -1,0 +1,48 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BlazorServerAppTests.IntegrationTests
+{
+    public class MulticastClientIntegrationTests
+    {
+        private readonly XUnitLoggerProvider _loggerProvider;
+
+        public MulticastClientIntegrationTests(ITestOutputHelper testOutputHelper)
+        {
+            _loggerProvider = new XUnitLoggerProvider(testOutputHelper);
+        }
+
+        [Theory]
+        [AutoDomainData]
+        public void WhenRegisteringThenSuccess(
+            MulticastClient server,
+            MulticastClient client)
+        {
+            // Arrange
+            MulticastClient.ShowNetworkLocalIps();
+            MulticastClient.ShowNetworkInterfaces();
+            server.Logger = _loggerProvider.CreateLogger<MulticastClient>();
+            MulticastData? data = null;
+            server.DataReceived += (sender, e) =>
+            {
+                data = e;
+            };
+
+            string multicastGroup = "224.0.0.1";
+            int testPort = 6478;
+
+            // Act
+            server.StartService(testPort, multicastGroup);
+            client.Send("test", multicastGroup, testPort);
+
+            SpinWait.SpinUntil(() => data != null, TimeSpan.FromSeconds(5));
+
+
+            // Assert
+            Assert.NotNull(data);
+        }
+    }
+}
