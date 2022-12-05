@@ -75,7 +75,8 @@
 
     private string GetStringMetadata(ServiceModel model)
     {
-        return string.Join("\n", model.Metadata);
+        var result = string.Join("\n", model.Metadata);
+        return result;
     }
 
     private string GetColorFromHealthState(ServiceModel model)
