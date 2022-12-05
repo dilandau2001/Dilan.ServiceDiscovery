@@ -120,6 +120,11 @@
             initial = initial.Where(n => n.HealthState.ToString().Contains(_healthFilter, StringComparison.InvariantCultureIgnoreCase));
         }
 
+        if (_metaFilter != "")
+        {
+            initial = initial.Where(n => string.Join(',', n.Metadata).Contains(_metaFilter, StringComparison.InvariantCultureIgnoreCase));
+        }
+
         FilteredServiceList = initial.ToList();
     }
 
