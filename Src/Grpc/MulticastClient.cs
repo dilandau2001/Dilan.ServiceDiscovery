@@ -1,34 +1,37 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Net.NetworkInformation;
 using Microsoft.Extensions.Logging;
 using System.Text;
 
 namespace Dilan.GrpcServiceDiscovery.Grpc
 {
     /// <summary>
-    /// Class for UDP communication
+    /// Class for Multicast communication
     /// </summary>
-    public class MulticastClient : UdpClient
+    public sealed class MulticastClient : IDisposable
     {
         #region FIELDS
 
         private Thread _receiverThread;
-        
+        private readonly List<UdpClient> _clients = new List<UdpClient>();
+        private readonly UdpClient _client;
+
         #endregion
 
         #region PUBLIC: CONSTRUCTOR
 
         /// <summary>
-        /// Initializes a new instance of the UDP class
+        /// Initializes a new instance of the MulticastClient class
         /// </summary>
         public MulticastClient(
             ILogger<MulticastClient> logger)
         {
             Logger = logger;
             Enabled = false;
+            _client = new UdpClient();
         }
         
         #endregion
@@ -61,7 +64,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         public string MulticastGroup { get; private set; }
 
         /// <summary>
-        /// 
+        /// Gets or sets the logger.
         /// </summary>
         public ILogger<MulticastClient> Logger { get; set; }
         
@@ -100,8 +103,11 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         {
             using (Logger.BeginScope(nameof(StopService)))
             {
-                // disable service
-                Enabled = false;
+                if (!Enabled)
+                {
+                    Logger.LogDebug("Not Started");
+                    return;
+                }
 
                 if (_receiverThread != null)
                 {
@@ -119,6 +125,24 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 }
 
                 MulticastGroup = string.Empty;
+
+                // disable service
+                Enabled = false;
+            }
+        }
+
+        private void DropMulticastGroup(IPAddress parse)
+        {
+            foreach (var udpClient in _clients)
+            {
+                try
+                {
+                    udpClient.DropMulticastGroup(parse);
+                }
+                catch (Exception e)
+                {
+                    Logger.LogWarning(e.Message);
+                }
             }
         }
 
@@ -128,12 +152,14 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// <param name="multicastGroup"></param>
         /// <param name="rxPort"></param>
         /// <param name="timeToLive"></param>
-        private void JoinMulticastGroup(string multicastGroup, int rxPort, int timeToLive = 1)
+        public void JoinMulticastGroup(string multicastGroup, int rxPort, int timeToLive = 1)
         {
+            MulticastGroup = multicastGroup;
             var list = StaticHelpers.GetAllLocalIpAddress();
+            
             foreach (var s in list)
             {
-                JoinMulticastGroup2(multicastGroup, rxPort, timeToLive, s);
+                JoinMulticastGroup(multicastGroup, rxPort, timeToLive, s);
             }
         }
 
@@ -144,10 +170,10 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// <param name="rxPort">multicast receiving port</param>
         /// <param name="timeToLive">Time to live. Number of network jumps a multicast packet can do </param>
         /// <param name="localIp"></param>
-        public void JoinMulticastGroup2(string multicastGroup, int rxPort, int timeToLive = 1, string localIp = "")
+        private void JoinMulticastGroup(string multicastGroup, int rxPort, int timeToLive, string localIp)
         {
             try
-            {
+            {   
                 IPEndPoint localPt = new IPEndPoint(IPAddress.Any, rxPort);
                 IPAddress multicastAddress = IPAddress.Parse(multicastGroup);
 
@@ -157,18 +183,17 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                     localPt = new IPEndPoint(localAddress, rxPort);
                 }
                 
-                Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                ReceivePort = rxPort;
-                EnableBroadcast = true;
-                ExclusiveAddressUse = false;
-                Client.Bind(localPt);
-                
-                // Join socket to a Multicast group
-                JoinMulticastGroup(multicastAddress, timeToLive);
+                UdpClient client = new UdpClient();
+                client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                client.EnableBroadcast = true;
+                client.ExclusiveAddressUse = false;
+                client.Client.Bind(localPt);
+                client.JoinMulticastGroup(multicastAddress, timeToLive);
+                _clients.Add(client);
             }
             catch (Exception exc)
             {
-                Debug(exc);
+                Logger.LogError(exc, exc.Message);
             }
         }
         
@@ -176,139 +201,55 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// Send Data to destination Ip and Port
         /// </summary>
         /// <param name="data">Byte Array</param>
-        /// <param name="multicastGroup">Destination Ip</param>
+        /// <param name="address">Destination Ip</param>
         /// <param name="destinationPort">Destination Port</param>
-        public void Send(string data, string multicastGroup, int destinationPort)
+        public void Send(string data, string address, int destinationPort)
         {
             try
             {
                 // Construct destination IPEndPoint
-                Logger.LogDebug($"Send message {data} to {multicastGroup}:{destinationPort}" );
-                IPAddress address = IPAddress.Parse(multicastGroup);
+                Logger.LogDebug($"Send message {data} to {address}:{destinationPort}" );
+                IPAddress netIp = IPAddress.Parse(address);
+                IPEndPoint destination = new IPEndPoint(netIp, destinationPort);
+                
+                byte[] bytes = Encoding.ASCII.GetBytes(data);
+
+                _client.Send(bytes, bytes.Length, destination);
+            }
+            catch (Exception exc)
+            {
+                Logger.LogError(exc, exc.Message);
+            }
+        }
+
+        /// <summary>
+        /// Send Data to the configured multicast group. In order to use this you had to previously call JoinMulticastGroup.
+        /// </summary>
+        /// <param name="data">Byte Array</param>
+        /// <param name="destinationPort">Destination Port</param>
+        public void Send(string data, int destinationPort)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(MulticastGroup))
+                {
+                    Logger.LogWarning("Cannot send to a multicast group as it is not configured. You have to call JoinMulticastGroup first");
+                    return;
+                }
+
+                // Construct destination IPEndPoint
+                Logger.LogDebug($"Send message {data} to {MulticastGroup}:{destinationPort}" );
+                IPAddress address = IPAddress.Parse(MulticastGroup);
                 IPEndPoint destination = new IPEndPoint(address, destinationPort);
                 
                 byte[] bytes = Encoding.ASCII.GetBytes(data);
 
-                // Call udp client Send Data
-                Send(bytes, bytes.Length, destination);
+                _clients.ForEach(n=>n.Send(bytes, bytes.Length, destination));
             }
             catch (Exception exc)
             {
-                Debug(exc);
+                Logger.LogError(exc, exc.Message);
             }
-        }
-
-
-        //// TODO: I will need this in the future to allow user to select network interface for RED and BLUE
-        /// <summary>
-        /// show Network interfaces
-        /// </summary>
-        public static string[] ShowNetworkInterfaces()
-        {
-            IPGlobalProperties computerProperties = IPGlobalProperties.GetIPGlobalProperties();
-            NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
-            Console.WriteLine("Interface information for {0}.{1}     ",
-                    computerProperties.HostName, computerProperties.DomainName);
-            if (nics == null || nics.Length < 1)
-            {
-                Console.WriteLine("  No network interfaces found.");
-                return null;
-            }
-
-            Console.WriteLine("  Number of interfaces .................... : {0}", nics.Length);
-            string NetworkInterfaces = string.Empty;
-            foreach (NetworkInterface adapter in nics)
-            {
-                UnicastIPAddressInformation info = adapter.GetIPProperties().UnicastAddresses[0];
-                string index = info.Address.ToString();
-                IPInterfaceProperties properties = adapter.GetIPProperties(); //  .GetIPInterfaceProperties();
-                Console.WriteLine();
-                Console.WriteLine(adapter.Description);
-
-                if (NetworkInterfaces != string.Empty)
-                {
-                    NetworkInterfaces += ";";
-                }
-                NetworkInterfaces += adapter.Description;
-
-                Console.WriteLine(String.Empty.PadLeft(adapter.Description.Length, '='));
-                Console.WriteLine("  Interface type .......................... : {0}", adapter.NetworkInterfaceType);
-                Console.Write("  Physical address ........................ : ");
-                PhysicalAddress address = adapter.GetPhysicalAddress();
-                byte[] bytes = address.GetAddressBytes();
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    // Display the physical address in hexadecimal.
-                    Console.Write("{0}", bytes[i].ToString("X2"));
-                    // Insert a hyphen after each byte, unless we are at the end of the 
-                    // address.
-                    if (i != bytes.Length - 1)
-                    {
-                        Console.Write("-");
-                    }
-                }
-                Console.WriteLine();
-            }
-
-            return NetworkInterfaces.Split(';');
-        }
-
-        //// TODO: I will need this in the future to allow user to select network interface for RED and BLUE
-        /// <summary>
-        /// show Network interfaces
-        /// </summary>
-        public static string[] ShowNetworkLocalIps()
-        {
-            IPGlobalProperties computerProperties = IPGlobalProperties.GetIPGlobalProperties();
-            NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
-            Console.WriteLine("Interface information for {0}.{1}     ",
-                    computerProperties.HostName, computerProperties.DomainName);
-            if (nics == null || nics.Length < 1)
-            {
-                Console.WriteLine("  No network interfaces found.");
-                return null;
-            }
-
-            Console.WriteLine("  Number of interfaces .................... : {0}", nics.Length);
-            string NetworkInterfaces = string.Empty;
-            foreach (NetworkInterface adapter in nics)
-            {
-                IPInterfaceProperties property = adapter.GetIPProperties();
-                if (property.UnicastAddresses.Count == 0)
-                {
-                    continue;
-                }
-                UnicastIPAddressInformation info = property.UnicastAddresses[0];
-                string index = info.Address.ToString();
-                Console.WriteLine();
-                Console.WriteLine(adapter.Description);
-
-                if (NetworkInterfaces != string.Empty)
-                {
-                    NetworkInterfaces += ";";
-                }
-                NetworkInterfaces += index;
-
-                Console.WriteLine(String.Empty.PadLeft(adapter.Description.Length, '='));
-                Console.WriteLine("  Interface type .......................... : {0}", adapter.NetworkInterfaceType);
-                Console.Write("  Physical address ........................ : ");
-                PhysicalAddress address = adapter.GetPhysicalAddress();
-                byte[] bytes = address.GetAddressBytes();
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    // Display the physical address in hexadecimal.
-                    Console.Write("{0}", bytes[i].ToString("X2"));
-                    // Insert a hyphen after each byte, unless we are at the end of the 
-                    // address.
-                    if (i != bytes.Length - 1)
-                    {
-                        Console.Write("-");
-                    }
-                }
-                Console.WriteLine();
-            }
-
-            return NetworkInterfaces.Split(';');
         }
 
         #endregion
@@ -324,63 +265,48 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             
             while (Enabled)
             {
-                if (Available == 0)
+                foreach (var udpClient in _clients)
                 {
-                    Thread.Sleep(100);
-                    continue;
-                }
-
-                if (!Enabled)
-                    break;
-
-                try
-                {
-                    byte[] dataReceived = Receive(ref sourceIp);
-                    var str = Encoding.Default.GetString(dataReceived);
-                    Logger.LogDebug($"Reveided {str} from {sourceIp}");
-
-                    DataReceived?.Invoke(this, new MulticastData
+                    if (udpClient.Available == 0)
                     {
-                        Message = str,
-                        Source = sourceIp
-                    });
+                        continue;
+                    }
+
+                    if (!Enabled)
+                        break;
+
+                    try
+                    {
+                        byte[] dataReceived = udpClient.Receive(ref sourceIp);
+                        var str = Encoding.Default.GetString(dataReceived);
+                        Logger.LogDebug($"Reveided {str} from {sourceIp}");
+
+                        DataReceived?.Invoke(this, new MulticastData
+                        {
+                            Message = str,
+                            Source = sourceIp
+                        });
+                    }
+                    catch (Exception exc)
+                    {
+                        Logger.LogError(exc, exc.Message);
+                    }
                 }
-                catch (Exception exc)
-                {
-                    Debug(exc);
-                }
+
+                Thread.Sleep(100);
             }
 
             Logger.LogDebug("Receiving thread finished.");
         }
 
-        /// <summary>
-        /// Send exceptions to a common debugging process. If DEBUG is on messages are sent to Console.
-        /// If DEBUG is off any error will through an exception
-        /// </summary>
-        /// <param name="exc">Exception to analyze</param>
-        private void Debug(Exception exc)
-        {
-            Logger.LogError(exc, exc.Message);
-        }
-
-        /// <summary>
-        /// Send Debug text to Console only if DEBUG = true
-        /// </summary>
-        /// <param name="text">Text that will be written in the console</param>
-        private void Debug(string text)
-        {
-            Logger.LogTrace(text);
-        }
-
         #region Overrides of UdpClient
 
-        /// <summary>Releases the unmanaged resources used by the <see cref="T:System.Net.Sockets.UdpClient"></see> and optionally releases the managed resources.</summary>
-        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
-        protected override void Dispose(bool disposing)
+        public void Dispose()
         {
             StopService();
-            base.Dispose(disposing);    
+
+            _clients.ForEach(n=>n.Dispose());
+            _clients.Clear();   
         }
 
         #endregion

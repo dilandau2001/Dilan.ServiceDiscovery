@@ -22,8 +22,6 @@ namespace BlazorServerAppTests.IntegrationTests
             MulticastClient client)
         {
             // Arrange
-            MulticastClient.ShowNetworkLocalIps();
-            MulticastClient.ShowNetworkInterfaces();
             server.Logger = _loggerProvider.CreateLogger<MulticastClient>();
             MulticastData? data = null;
             server.DataReceived += (sender, e) =>

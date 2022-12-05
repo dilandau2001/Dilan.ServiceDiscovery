@@ -12,7 +12,6 @@
     <button @onclick="ClearOffline">
         Clear
     </button>
-
 </p>
 
 <table class="table">
@@ -29,7 +28,19 @@
     </tr>
     </thead>
     <tbody>
-    @foreach (var item in Service.ServiceDictionary.Values)
+    
+    <tr>
+        <td><InputText style="width: 150px;" id="serviceFilter" @bind-Value="_serviceNameFilter" @onchange="NameChanged" placeholder="Service Name Filter"></InputText></td>
+        <td><InputText style="width: 150px;" id="addressFilter" @bind-Value="_addressFilter" @onchange="NameChanged" placeholder="Address Filter"></InputText></td>
+        <td><InputText style="width: 100px;" id="portFilter" @bind-Value="_portFilter" @onchange="NameChanged" placeholder="Port Filter"></InputText></td>
+        <td><InputText style="width: 100px;" id="scopeFilter" @bind-Value="_scopeFilter" @onchange="NameChanged" placeholder="Scope Filter"></InputText></td>
+        <td><InputText style="width: 100px;" id="healthFilter" @bind-Value="_healthFilter" @onchange="NameChanged" placeholder="Health Filter"></InputText></td>
+        <td><InputText id="metaFilter" @bind-Value="_metaFilter" @onchange="NameChanged" placeholder="Metadata Filter"></InputText></td>
+        <td></td>
+        <td></td>
+    </tr>
+
+        @foreach (var item in FilteredServiceList)
     {
         <tr style="background: @GetColorFromEnabled(item)">
             <td>@item.ServiceName</td>
@@ -46,6 +57,16 @@
 </table>
 
 @code {
+
+    private string _serviceNameFilter = string.Empty;
+    private string _addressFilter= string.Empty;
+    private string _portFilter = string.Empty;
+    private string _scopeFilter = string.Empty;
+    private string _healthFilter = string.Empty;
+    private string _metaFilter = string.Empty;
+    private List<ServiceModel> FilteredServiceList = new List<ServiceModel>();
+
+
     protected override Task OnInitializedAsync()
     {
         Service.ServiceModelListChanged += ServiceOnServiceModelListChanged;
@@ -70,6 +91,38 @@
         }
     }
 
+    private void UpdateList()
+    {
+        var initial = Service.ServiceDictionary.Values.AsEnumerable();
+
+        if (_serviceNameFilter != "")
+        {
+            initial = initial.Where(n => n.ServiceName.Contains(_serviceNameFilter, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        if (_addressFilter != "")
+        {
+            initial = initial.Where(n => n.Address != null && n.Address.Contains(_addressFilter, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        if (_portFilter != "")
+        {
+            initial = initial.Where(n => n.Port.ToString().Contains(_portFilter, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        if (_scopeFilter != "")
+        {
+            initial = initial.Where(n => n.Scope.ToString().Contains(_scopeFilter, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        if (_healthFilter != "")
+        {
+            initial = initial.Where(n => n.HealthState.ToString().Contains(_healthFilter, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        FilteredServiceList = initial.ToList();
+    }
+
     private string GetColorFromEnabled(ServiceModel model)
     {
         return model.Enabled ? "white" : "lightgray";
@@ -78,12 +131,19 @@
     private void ServiceOnServiceModelListChanged(object? sender, EventArgs e)
     {
         // Tell web to update.
+        UpdateList();
         InvokeAsync(StateHasChanged);
     }
 
     private void ClearOffline()
     {
         Service.Clear();
+    }
+
+    private void NameChanged()
+    {
+        UpdateList();
+        InvokeAsync(StateHasChanged);
     }
 
 }

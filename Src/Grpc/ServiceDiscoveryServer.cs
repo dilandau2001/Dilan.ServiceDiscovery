@@ -94,7 +94,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
 
                 if (Options.EnableAutoDiscover)
                 {
-                    //_client.JoinMulticastGroup(Options.AutoDiscoverMulticastGroup, Options.AutoDiscoverPort);
+                    _client.JoinMulticastGroup(Options.AutoDiscoverMulticastGroup, Options.AutoDiscoverPort);
                     _tempo.Interval = TimeSpan.FromSeconds(Options.AutoDiscoverFreq).TotalMilliseconds;
                     _tempo.Start();
                 }
@@ -193,7 +193,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         {
             string mainIp = StaticHelpers.GetLocalIpAddress();
             string sms = $"DiscoveryServerIp={mainIp};Port={Options.Port}";
-            _client.Send(sms, Options.AutoDiscoverMulticastGroup, Options.AutoDiscoverPort);
+            _client.Send(sms, Options.AutoDiscoverPort);
         }
 
         /// <summary>

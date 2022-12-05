@@ -70,7 +70,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         {
             return ServiceDictionary
                 .Values
-                .Where(n=> scope != string.Empty && n.Scope.ToLower().Contains(scope.ToLower()))
+                .Where(n=> scope == string.Empty || n.Scope!= null && scope != string.Empty && n.Scope.ToLower().Contains(scope.ToLower()))
                 .Where(n=>n.ServiceName.ToLower().Contains(serviceName.ToLower()) && n.HealthState == EnumServiceHealth.Healthy && n.Enabled)
                 .Select(n=> n.ToServiceDto())
                 .ToList();
@@ -137,6 +137,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             model.HealthState = comingDto.HealthState;
             model.LastRefreshTime = DateTimeOffset.Now;
             model.TimeoutTime = DateTimeOffset.Now + TimeSpan.FromSeconds(_options.TimeOutInSeconds);
+            model.Scope = comingDto.Scope;
             model.UpdateMetadata(comingDto.Metadata);
         }
 
@@ -154,6 +155,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 HealthState = comingDto.HealthState,
                 StartTime = DateTimeOffset.Now,
                 LastRefreshTime = DateTimeOffset.Now,
+                Scope = comingDto.Scope,
                 TimeoutTime = DateTimeOffset.Now + TimeSpan.FromSeconds(_options.TimeOutInSeconds)
             };
 
