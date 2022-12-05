@@ -48,7 +48,7 @@
             <td>@item.Port</td>
             <td>@item.Scope</td>
             <td style="background: @GetColorFromHealthState(item)">@item.HealthState</td>
-            <td><pre>@string.Join("\n", item.Metadata)</pre></td>
+            <td><pre>@GetStringMetadata(item)</pre></td>
             <td>@item.LastRefreshTime.LocalDateTime</td>
             <td><input type="checkbox" @bind="@item.Enabled"></td>
         </tr>
@@ -71,6 +71,11 @@
     {
         Service.ServiceModelListChanged += ServiceOnServiceModelListChanged;
         return Task.CompletedTask;
+    }
+
+    private string GetStringMetadata(ServiceModel model)
+    {
+        return string.Join("\n", model.Metadata);
     }
 
     private string GetColorFromHealthState(ServiceModel model)

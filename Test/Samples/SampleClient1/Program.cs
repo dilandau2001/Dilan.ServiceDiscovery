@@ -5,7 +5,11 @@ Console.WriteLine("Hello, World!");
 var client = new ServiceDiscoveryClient(
     new ConsoleLogger<ServiceDiscoveryClient>(),
     new ClientConfigurationOptions(),
-    new MulticastClient(new ConsoleLogger<MulticastClient>()));
+    new MulticastClient(new ConsoleLogger<MulticastClient>()),
+    new List<IMetadataProvider>()
+    {
+        new SystemInfoMetadataProvider()
+    });
 
 Console.WriteLine("Enter Service Name");
 var serviceName = Console.ReadLine();
@@ -22,11 +26,6 @@ client.ExtraData["test"] = "hello";
 // this will raise 
 await client.Start();
 
-var seconds = 0;
-var tempo = new System.Timers.Timer(1000);
-tempo.Elapsed += (sender, eventArgs) => client.ExtraData["runningTime"] = (seconds++).ToString();
-tempo.Start();
-
 Console.WriteLine("1 for as for service");
 Console.WriteLine("Press other to finish");
 string? s = Console.ReadLine();
@@ -40,4 +39,3 @@ while (s=="1")
 }
 
 Console.WriteLine("End");
-tempo.Close();

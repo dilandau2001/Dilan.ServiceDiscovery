@@ -87,7 +87,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 var properties = network.GetIPProperties();
 
                 if (network.OperationalStatus != OperationalStatus.Up ||
-                    network.Description.ToLower().Contains("vmware") ||
+                    network.Description.ToLower().Contains("virtual") ||
                     network.Description.ToLower().Contains("pseudo"))
                     continue;
                 

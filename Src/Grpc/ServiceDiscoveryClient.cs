@@ -22,6 +22,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         private States _currentState;
         private int _refreshTime;
         private readonly MulticastClient _multicastClient;
+        private readonly IEnumerable<IMetadataProvider> _metadataProviders;
 
         public enum States
         {
@@ -48,17 +49,20 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// <param name="logger"></param>
         /// <param name="options"></param>
         /// <param name="multicastClient"></param>
+        /// <param name="metadataProviders"></param>
         public ServiceDiscoveryClient(
             ILogger<ServiceDiscoveryClient> logger,
             ClientConfigurationOptions options,
-            MulticastClient multicastClient)
+            MulticastClient multicastClient,
+            IEnumerable<IMetadataProvider> metadataProviders)
         {
             Logger = logger;
             Logger.BeginScope(nameof(ServiceDiscoveryClient));
             Options = options;
             _currentState = States.NotConnected;
             _multicastClient = multicastClient;
-
+            _metadataProviders = metadataProviders;
+            
             _tempo = new Timer(1000);
             _tempo.Elapsed += TempoOnElapsed;
             
@@ -225,9 +229,19 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 ServiceHost = Options.ServiceAddress,
                 Scope = Options.Scope
             };
-
+            
             dto.Metadata.Add(ExtraData);
 
+            // Add data from metadata providers
+            if (_metadataProviders != null)
+            {
+                foreach (var metadataProvider in _metadataProviders)
+                {
+                    var data = metadataProvider.GetMetadata();
+                    dto.Metadata.Add(data);
+                }
+            }
+            
             return dto;
         }
 

@@ -305,6 +305,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         {
             StopService();
 
+            _client.Dispose();
             _clients.ForEach(n=>n.Dispose());
             _clients.Clear();   
         }
