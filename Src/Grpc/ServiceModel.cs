@@ -180,6 +180,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 ServiceName = _serviceName,
                 ServicePort = _port,
                 HealthState = _state,
+                Scope = _scope,
                 Metadata = { _metadata }
             };
         }

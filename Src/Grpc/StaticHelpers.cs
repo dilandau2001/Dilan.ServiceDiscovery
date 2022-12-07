@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -7,8 +6,16 @@ using System.Net.Sockets;
 
 namespace Dilan.GrpcServiceDiscovery.Grpc
 {
-    public class StaticHelpers
+    /// <summary>
+    /// Static functions that can be used our of context.
+    /// </summary>
+    public static class StaticHelpers
     {
+        /// <summary>
+        /// Returns all IPv4 ip addresses of on line network interfaces.
+        /// </summary>
+        /// <param name="_type">Network interface type. By default Ethernet.</param>
+        /// <returns></returns>
         public static List<string> GetAllLocalIPv4(NetworkInterfaceType _type = NetworkInterfaceType.Ethernet)
         {
             var list = new List<string>();
@@ -32,6 +39,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
 
         /// <summary>
         /// Returns a valid ip address among up interfaces.
+        /// Excluding pseudo and virtual networks.
         /// </summary>
         /// <returns></returns>
         public static string GetLocalIpAddress()
@@ -71,7 +79,8 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         }
 
         /// <summary>
-        /// Returns a valid ip address among up interfaces.
+        /// Returns all valid ip address among up interfaces.
+        /// Excluding pseudo and virtual networks.
         /// </summary>
         /// <returns></returns>
         public static List<string> GetAllLocalIpAddress()
