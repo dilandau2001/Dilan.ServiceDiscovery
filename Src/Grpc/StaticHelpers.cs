@@ -41,7 +41,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// Returns a valid ip address among up interfaces.
         /// Excluding pseudo and virtual networks.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Returns first ip address that is not virtual nor pseudo from all available up networks</returns>
         public static string GetLocalIpAddress()
         {
             var returnAddress = string.Empty;
