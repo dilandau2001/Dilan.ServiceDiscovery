@@ -93,6 +93,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 _receiverThread.Start();
                 
                 Enabled = true;
+                Logger.LogInformation($"Multicast service listening on port {port}");
             }
         }
         

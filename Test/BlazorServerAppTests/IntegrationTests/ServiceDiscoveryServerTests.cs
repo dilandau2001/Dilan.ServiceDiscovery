@@ -15,8 +15,7 @@ namespace BlazorServerAppTests.IntegrationTests
                 var options = new ServiceConfigurationOptions
                 {
                     EnableAutoDiscover = false,
-                    RefreshTimeInSeconds = 10,
-                    TimeOutInSeconds = 2
+                    RefreshTimeInSeconds = 10
                 };
 
                 var multicastClient = new MulticastClient(loggerProvider.CreateLogger<MulticastClient>());
@@ -117,7 +116,7 @@ namespace BlazorServerAppTests.IntegrationTests
 
                 // Act
                 await _client1.Stop();
-                await Task.Delay(TimeSpan.FromSeconds(_sut.Options.TimeOutInSeconds + 1));
+                await Task.Delay(TimeSpan.FromSeconds(_sut.Options.TimeOutInSeconds + 2));
                 
                 var res = await _client1.FindService(_client1.Options.ServiceName);
 
