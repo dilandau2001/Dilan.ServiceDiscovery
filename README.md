@@ -1,10 +1,5 @@
 # Dilan.ServiceDiscovery
 
-![banner]()
-
-![badge]()
-![badge]()
-[![license](https://img.shields.io/github/license/:user/:repo.svg)](LICENSE)
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
 This library provides a fast, easy to setup way to implement a discovery service pattern within any .NET solution/project.
