@@ -30,7 +30,15 @@ namespace BlazorServerAppTests
 
         public IDisposable BeginScope<TState>(TState state)
         {
-            _testOutputHelper.WriteLine("Beginning " + state);
+            try
+            {
+                _testOutputHelper.WriteLine("Beginning " + state);
+            }
+            catch
+            {
+                //
+            }
+            
             return _scopeProvider.Push(state);
         }
 

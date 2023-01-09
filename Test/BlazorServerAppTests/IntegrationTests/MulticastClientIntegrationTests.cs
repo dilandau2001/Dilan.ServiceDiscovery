@@ -11,7 +11,7 @@
 
         [Theory]
         [AutoDomainData]
-        public void WhenRegisteringThenSuccess(
+        public void WhenServerListeningAndClientSendThenServerReceivesMessage(
             MulticastClient server,
             MulticastClient client)
         {
@@ -25,7 +25,7 @@
             };
 
             string multicastGroup = "224.0.0.1";
-            int testPort = 6478;
+            int testPort = StaticHelpers.GetAvailablePort(8000);
 
             // Act
             server.StartService(testPort, multicastGroup);
