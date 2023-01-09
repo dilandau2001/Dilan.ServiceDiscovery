@@ -75,6 +75,10 @@ jobs:
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.0.2
 
+    # Restore
+    - name: Restore Dependencies
+    run: dotnet restore Dilan.ServiceDiscovery.sln
+
     # Build
     - name: Build
       run: dotnet build Dilan.ServiceDiscovery.sln --configuration Release --no-restore
