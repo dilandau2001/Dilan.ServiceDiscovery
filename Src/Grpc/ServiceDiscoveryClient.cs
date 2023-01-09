@@ -1,18 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Timers;
-using Appccelerate.StateMachine;
+﻿using Appccelerate.StateMachine;
 using Appccelerate.StateMachine.AsyncMachine;
 using Appccelerate.StateMachine.AsyncMachine.Events;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Timers;
 
 namespace Dilan.GrpcServiceDiscovery.Grpc
 {
     /// <summary>
-    /// 
+    /// Instance of the client that tries to connect to the server and registers periodically.
     /// </summary>
     public sealed class ServiceDiscoveryClient : IDisposable
     {
@@ -111,9 +111,8 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         public Dictionary<string, string> ExtraData { get; } = new Dictionary<string, string>();
 
         /// <summary>
-        /// 
+        /// Starts the client.
         /// </summary>
-        /// <returns></returns>
         public async Task Start()
         {
             using (Logger.BeginScope(nameof(Start)))
@@ -131,9 +130,8 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         }
 
         /// <summary>
-        /// 
+        /// Stops the client.
         /// </summary>
-        /// <returns></returns>
         public async Task Stop()
         {
             using (Logger.BeginScope(nameof(Stop)))
@@ -147,10 +145,9 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         }
 
         /// <summary>
-        /// 
+        /// Actively registers the service.
         /// </summary>
-        /// <param name="dto"></param>
-        /// <returns></returns>
+        /// <param name="dto">Registers the client into the server.</param>
         public async Task<RegisterServiceResponse> RegisterService(ServiceDto dto)
         {
             using (Logger.BeginScope(nameof(RegisterService) + $"({dto})"))
@@ -175,11 +172,10 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         }
 
         /// <summary>
-        /// 
+        /// Find all services that matches the service name and the scope.
         /// </summary>
-        /// <param name="serviceName"></param>
-        /// <param name="scope"></param>
-        /// <returns></returns>
+        /// <param name="serviceName">Service name or tag.</param>
+        /// <param name="scope">Scope of the request. If set it means that we are requesting all services from those belonging to a specific scope.</param>
         public async Task<FindServiceResponse> FindService(string serviceName, string scope = "")
         {
             using (Logger.BeginScope(nameof(FindService) + $"({serviceName}, {scope})"))
@@ -203,10 +199,8 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         }
 
         /// <summary>
-        /// 
+        /// Timer elapsed
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void TempoOnElapsed(object sender, ElapsedEventArgs e)
         {
             using (Logger.BeginScope(nameof(TempoOnElapsed)))
@@ -216,9 +210,9 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         }
 
         /// <summary>
-        /// 
+        /// Calculate all info that is going to be registered into the server.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Returns the service information to be sent.</returns>
         private ServiceDto CalculateServiceDto()
         {
             var dto = new ServiceDto
@@ -246,7 +240,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         }
 
         /// <summary>
-        /// 
+        /// State machine.
         /// </summary>
         private void BuildGraph()
         {
@@ -313,10 +307,6 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
         private Task ConnectedOnEnter()
         {
             using (Logger.BeginScope(nameof(ConnectedOnEnter)))
@@ -331,10 +321,6 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
         private async Task ConnectingOnEnter()
         {
             using (Logger.BeginScope(nameof(ConnectingOnEnter)))
@@ -357,19 +343,10 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             
                 _client = new DiscoveryService.DiscoveryServiceClient(channel);
 
-                // Reset timer.
-                _tempo.Stop();
-                _tempo.Start();
-
                 await ExecuteRegistration();
-                _tempo.Start();
             }
         }
-        
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
+
         private Task NotConnectedOnEnter()
         {
             using (Logger.BeginScope(nameof(NotConnectedOnEnter)))
@@ -380,12 +357,10 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
         private async Task ExecuteRegistration()
         {
+            // while registering stop the timer.
+            _tempo.Stop();
             var dto = CalculateServiceDto();
             var result = await RegisterService(dto);
 
@@ -401,6 +376,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             }
 
             _tempo.Interval = TimeSpan.FromSeconds(_refreshTime).TotalMilliseconds;
+            _tempo.Start();
         }
 
         
@@ -413,7 +389,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         #region IDisposable
 
         /// <summary>
-        /// 
+        /// Dispose.
         /// </summary>
         public void Dispose()
         {

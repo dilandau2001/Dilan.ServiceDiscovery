@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Grpc.Core;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.Timers;
-using Grpc.Core;
-using Microsoft.Extensions.Logging;
 
 namespace Dilan.GrpcServiceDiscovery.Grpc
 {
@@ -12,7 +12,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
     /// </summary>
     public sealed class ServiceDiscoveryServer : DiscoveryService.DiscoveryServiceBase, IDisposable
     {
-        private readonly ServerManagerLogic _logic;
+        private readonly IServerManagerLogic _logic;
         private Server _server;
         private readonly IMulticastClient _client;
         private readonly Timer _tempo;
@@ -26,7 +26,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// <param name="client"></param>
         public ServiceDiscoveryServer(
             ILogger<ServiceDiscoveryServer> logger,
-            ServerManagerLogic logic,
+            IServerManagerLogic logic,
             ServiceConfigurationOptions options,
             IMulticastClient client)
         {
@@ -84,6 +84,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
 
                 if (Options.EnableAutoDiscover)
                 {
+                    Logger.LogTrace("Auto discover is enabled");
                     _client.JoinMulticastGroup(Options.AutoDiscoverMulticastGroup, Options.AutoDiscoverPort);
                     _tempo.Interval = TimeSpan.FromSeconds(Options.AutoDiscoverFreq).TotalMilliseconds;
                     _tempo.Start();

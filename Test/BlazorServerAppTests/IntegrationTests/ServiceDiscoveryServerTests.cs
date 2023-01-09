@@ -2,160 +2,154 @@ namespace BlazorServerAppTests.IntegrationTests
 {
     public class ServiceDiscoveryServerTests
     {
-        public class RegisterService
+        public class RegisterService : IAsyncLifetime
         {
-            private readonly XUnitLoggerProvider _loggerProvider;
+            private readonly ServiceDiscoveryServer _sut;
+            private readonly ServiceDiscoveryClient _client;
+            private readonly ServiceDiscoveryClient _client1;
+            private readonly ServiceDiscoveryClient _client2;
 
             public RegisterService(ITestOutputHelper testOutputHelper)
             {
-                _loggerProvider = new XUnitLoggerProvider(testOutputHelper);
+                var loggerProvider = new XUnitLoggerProvider(testOutputHelper);
+                var options = new ServiceConfigurationOptions
+                {
+                    EnableAutoDiscover = false,
+                    RefreshTimeInSeconds = 10
+                };
+
+                var multicastClient = new MulticastClient(loggerProvider.CreateLogger<MulticastClient>());
+
+                _sut = new ServiceDiscoveryServer(
+                    loggerProvider.CreateLogger<ServiceDiscoveryServer>(),
+                    new ServerManagerLogic(options),
+                    options,
+                    multicastClient);
+
+                _client = new ServiceDiscoveryClient(
+                    loggerProvider.CreateLogger<ServiceDiscoveryClient>(),
+                    new ClientConfigurationOptions {DiscoveryServerHost = "localhost"},
+                    multicastClient,
+                    new List<IMetadataProvider>{new SystemInfoMetadataProvider()});
+                
+                _client1 = new ServiceDiscoveryClient(
+                    loggerProvider.CreateLogger<ServiceDiscoveryClient>(),
+                    new ClientConfigurationOptions {DiscoveryServerHost = "localhost"},
+                    multicastClient, 
+                    new List<IMetadataProvider>{new SystemInfoMetadataProvider()});
+
+                _client2 = new ServiceDiscoveryClient(
+                    new ConsoleLogger<ServiceDiscoveryClient>(),
+                    new ClientConfigurationOptions {DiscoveryServerHost = "localhost"},
+                    multicastClient, 
+                    new List<IMetadataProvider>{new SystemInfoMetadataProvider()});
             }
 
-            [Theory]
-            [AutoDomainData]
-            public async Task WhenRegisteringThenSuccess(
-                ServiceDiscoveryClient client,
-                ServiceDiscoveryServer sut)
+            [Fact]
+            public async Task WhenRegisteringThenSuccess()
             {
                 // Arrange
-                client.Logger = _loggerProvider.CreateLogger<ServiceDiscoveryClient>();
-                sut.Logger = _loggerProvider.CreateLogger<ServiceDiscoveryServer>();
-                sut.Start();
-
+                await _client.Start();
                 var dto = new ServiceDto
                 {
                     HealthState = EnumServiceHealth.Healthy,
                     ServiceHost = "localhost",
                     ServicePort = 4567,
                     ServiceName = "MyName",
-                    Metadata = { { "key1", "value1" } }
+                    Metadata = { { "key1", "value1" } },
+                    Scope = ""
                 };
 
                 // Act
-                var res = await client.RegisterService(dto);
+                var res = await _client.RegisterService(dto);
 
                 // Assert
                 Assert.True(res.Ok);
             }
 
-            [Theory]
-            [AutoDomainData]
-            public async Task WhenRegisteringByUsingAutomaticConnectionThenSuccess(
-                ServiceDiscoveryClient client,
-                ServiceDiscoveryServer sut)
+            [Fact]
+            public async Task WhenRegisteringByUsingAutomaticConnectionThenSuccess()
             {
                 // Arrange
-                client.Logger = _loggerProvider.CreateLogger<ServiceDiscoveryClient>();
-                sut.Logger = _loggerProvider.CreateLogger<ServiceDiscoveryServer>();
-                sut.Start();
+                await _client.Start();
 
                 // Act
-                await client.Start();
-                var res = await client.FindService(client.Options.ServiceName);
+                var res = await _client.FindService(_client.Options.ServiceName);
 
                 // Assert
-                Assert.True(client.State == ServiceDiscoveryClient.States.Connected);
+                Assert.True(_client.State == ServiceDiscoveryClient.States.Connected);
                 Assert.True(res.Ok);
                 Assert.Single(res.Services);
-                Assert.Single(sut.ServiceDictionary);
+                Assert.Single(_sut.ServiceDictionary);
             }
 
-            [Theory]
-            [AutoDomainData]
-            public async Task WhenRegistering2ClientsByUsingAutomaticConnectionThenSuccess(
-                ServiceDiscoveryClient client1,
-                ServiceDiscoveryClient client2,
-                ServiceDiscoveryServer sut)
+            [Fact]
+            public async Task WhenRegistering2ClientsByUsingAutomaticConnectionThenSuccess()
             {
                 // Arrange
-                client1.Logger = _loggerProvider.CreateLogger<ServiceDiscoveryClient>();
-                sut.Logger = _loggerProvider.CreateLogger<ServiceDiscoveryServer>();
-                sut.Start();
 
                 // change port
-                client2.Options.CallbackPort = 7001;
+                _client2.Options.CallbackPort = 7001;
 
                 // Act
-                await client1.Start();
-                await client2.Start();
-                var res = await client1.FindService(client1.Options.ServiceName);
+                await _client1.Start();
+                await _client2.Start();
+
+                SpinWait.SpinUntil(
+                    () => _client1.State == ServiceDiscoveryClient.States.Connected &&
+                          _client2.State == ServiceDiscoveryClient.States.Connected,
+                    TimeSpan.FromSeconds(5));
+                var res = await _client1.FindService(_client1.Options.ServiceName);
 
                 // Assert
-                Assert.True(client1.State == ServiceDiscoveryClient.States.Connected);
+                Assert.True(_client1.State == ServiceDiscoveryClient.States.Connected);
                 Assert.True(res.Ok);
                 Assert.Equal(2, res.Services.Count);
-                Assert.Equal(2, sut.ServiceDictionary.Count);
+                Assert.Equal(2, _sut.ServiceDictionary.Count);
             }
 
-            [Theory]
-            [AutoDomainData]
-            public async Task WhenRegistrationTimesOutThenServiceIsOffline(
-                ServiceDiscoveryClient client1,
-                ServiceDiscoveryServer sut)
+            [Fact]
+            public async Task WhenRegistrationTimesOutThenServiceIsOffline()
             {
                 // Arrange
-                client1.Logger = _loggerProvider.CreateLogger<ServiceDiscoveryClient>();
-                sut.Logger = _loggerProvider.CreateLogger<ServiceDiscoveryServer>();
-                sut.Start();
-                await client1.Start();
+                await _client1.Start();
 
                 // Act
-                await client1.Stop();
-                await Task.Delay(TimeSpan.FromSeconds(sut.Options.TimeOutInSeconds + 1));
+                await _client1.Stop();
+                await Task.Delay(TimeSpan.FromSeconds(_sut.Options.TimeOutInSeconds + 1));
                 
-                var res = await client1.FindService(client1.Options.ServiceName);
+                var res = await _client1.FindService(_client1.Options.ServiceName);
 
                 // Assert
-                Assert.Single(sut.ServiceDictionary);
-                Assert.Equal(EnumServiceHealth.Offline, sut.ServiceDictionary.Values.First().HealthState);
+                Assert.Single(_sut.ServiceDictionary);
+                Assert.Equal(EnumServiceHealth.Offline, _sut.ServiceDictionary.Values.First().HealthState);
 
                 Assert.True(res.Ok);
                 Assert.Empty(res.Services);
             }
-        }
-    }
 
-    public class MyTestClass
-    {   
-        public MyTestClass(ILogger<MyTestClass> logger)
-        {
-            Logger = logger;
-            Logger.BeginScope(nameof(MyTestClass));
-        }
+            #region Implementation of IAsyncLifetime
 
-        public ILogger<MyTestClass> Logger { get; set; }
-
-        public bool Example()
-        {
-            using (Logger.BeginScope(nameof(Example)))
+            /// <summary>
+            /// Called immediately after the class has been created, before it is used.
+            /// </summary>
+            public Task InitializeAsync()
             {
-                Logger.LogDebug("My test");
-                return true;
+                _sut.Start();
+                return Task.CompletedTask;
             }
-        }
-    }
 
-    public class MyUnitTests
-    {
-        private readonly XUnitLoggerProvider _loggerProvider;
-        
-        public MyUnitTests(ITestOutputHelper testOutputHelper)
-        {
-            _loggerProvider = new XUnitLoggerProvider(testOutputHelper);
-        }
+            /// <summary>
+            /// Called when an object is no longer needed. Called just before <see cref="M:System.IDisposable.Dispose" />
+            /// if the class also implements that.
+            /// </summary>
+            public Task DisposeAsync()
+            {
+                _sut.Dispose();
+                return Task.CompletedTask;
+            }
 
-        [Theory]
-        [AutoDomainData]
-        public void WhenThen(MyTestClass sut)
-        {
-            // Arrange
-            sut.Logger = _loggerProvider.CreateLogger<MyTestClass>();
-            
-            // Act
-            var res = sut.Example();
-
-            // Assert
-            Assert.True(res);
+            #endregion
         }
     }
 }

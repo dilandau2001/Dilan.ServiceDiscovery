@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -46,7 +47,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         {
             var returnAddress = string.Empty;
 
-            // Get a list of all network interfaces (usually one per network card, dialup, and VPN connection)
+            // Get a list of all network interfaces (usually one per network card, dial up, and VPN connection)
             var networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
 
             foreach (var network in networkInterfaces)
@@ -87,7 +88,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         {
             List<string> result = new List<string>();
 
-            // Get a list of all network interfaces (usually one per network card, dialup, and VPN connection)
+            // Get a list of all network interfaces (usually one per network card, dial up, and VPN connection)
             var networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
 
             foreach (var network in networkInterfaces)
@@ -117,6 +118,21 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             }
 
             return result;
+        }
+
+        public static int GetAvailablePort(int startingPort)
+        {
+            if (startingPort > ushort.MaxValue) throw new ArgumentException($"Can't be greater than {ushort.MaxValue}", nameof(startingPort));
+            var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
+
+            var connectionsEndpoints = ipGlobalProperties.GetActiveTcpConnections().Select(c => c.LocalEndPoint);
+            var tcpListenersEndpoints = ipGlobalProperties.GetActiveTcpListeners();
+            var udpListenersEndpoints = ipGlobalProperties.GetActiveUdpListeners();
+            var portsInUse = connectionsEndpoints.Concat(tcpListenersEndpoints)
+                .Concat(udpListenersEndpoints)
+                .Select(e => e.Port);
+
+            return Enumerable.Range(startingPort, ushort.MaxValue - startingPort + 1).Except(portsInUse).FirstOrDefault();
         }
     }
 }

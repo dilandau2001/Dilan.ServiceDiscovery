@@ -14,6 +14,7 @@
                 ServiceAddress = local;
             }
         }
+
         /// <summary>
         /// Gets or sets the listening port for the server.
         /// The client will used to make calls to.
@@ -55,8 +56,9 @@
         public int AutoDiscoverPort { get; set; } = 5478;
 
         /// <summary>
-        /// Default client scope.
+        /// Default client scope. Similar to a tag, domain, or environment where this client is under.
+        /// It allows you to group this client as part of a set of clients of different services.
         /// </summary>
-        public string Scope { get; set; }
+        public string Scope { get; set; } = string.Empty;
     }
 }

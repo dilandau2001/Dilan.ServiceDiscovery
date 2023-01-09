@@ -54,7 +54,7 @@ message ServiceDto
     map<string, string> Metadata = 5;
 
     // String that describes or relates several services belonging to the same environment.
-    string Scope = 6;
+    optional string Scope = 6;
 }
 
 // Response of the service request.

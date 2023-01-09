@@ -1,5 +1,6 @@
 using Dilan.GrpcServiceDiscovery.BlazorServer.Data;
 using Dilan.GrpcServiceDiscovery.Grpc;
+using Microsoft.AspNetCore.Hosting.Server;
 
 // Read configuration from appSettings.
 var config = new ConfigurationBuilder()
@@ -22,7 +23,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<ServiceDiscoveryServer>();
 builder.Services.AddSingleton(options);
-builder.Services.AddSingleton<ServerManagerLogic>();
+builder.Services.AddSingleton<IServerManagerLogic, ServerManagerLogic>();
 builder.Services.AddSingleton<ServiceDiscoveryService>();
 builder.Services.AddSingleton<IMulticastClient, MulticastClient>();
 

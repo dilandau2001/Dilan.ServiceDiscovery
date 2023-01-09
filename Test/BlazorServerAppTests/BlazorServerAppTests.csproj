@@ -25,10 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="UnitTests\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\Src\Grpc\Dilan.GrpcServiceDiscovery.Grpc.csproj" />
   </ItemGroup>
 

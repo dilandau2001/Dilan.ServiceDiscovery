@@ -6,7 +6,7 @@ using System.Timers;
 
 namespace Dilan.GrpcServiceDiscovery.Grpc
 {
-    public sealed class ServerManagerLogic : IDisposable
+    public sealed class ServerManagerLogic : IServerManagerLogic
     {
         private readonly ServiceConfigurationOptions _options;
         private readonly Timer _tempo;
@@ -124,11 +124,12 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 serviceModel.Dirty = false;
             }
         }
-        
+
         /// <summary>
         /// Add or update when service already in the list.
         /// </summary>
         /// <param name="comingDto"></param>
+        /// <param name="model"></param>
         private void AddOrUpdateContinueExists(ServiceDto comingDto, ServiceModel model)
         {
             model.ServiceName = comingDto.ServiceName;

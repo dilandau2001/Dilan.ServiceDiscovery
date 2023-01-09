@@ -14,7 +14,7 @@
         /// <summary>
         /// Gets or sets the refresh time passed to clients.
         /// This is the time the server will communicate the clients they have to refresh its status.
-        /// <remarks>By default is 5 seconds</remarks>
+        /// <remarks>By default is 1 second</remarks>
         /// </summary>
         public int RefreshTimeInSeconds { get; set; } = 1;
 

@@ -49,6 +49,8 @@ namespace BlazorServerAppTests
                 
             }
 
+            sb.Append(state);
+
             if (exception != null) sb.Append(formatter(state, exception));
 
             try
