@@ -2,6 +2,8 @@
 
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
+[![NuGet version (Dilan.GrpcServiceDiscovery.Grpc)](https://img.shields.io/nuget/v/Dilan.GrpcServiceDiscovery.Grpc?style=flat-square)](https://www.nuget.org/packages/Dilan.GrpcServiceDiscovery.Grpc/)
+
 This library provides a fast, easy to setup way to implement a discovery service pattern within any .NET solution/project.
 Although there are several other more complex solutions out there that you might have consider, this one of mine have some features you might find matching your problem
 as it matched mine.
@@ -55,8 +57,9 @@ But I am planning some improvements for installation.
 
 ### The Library
 
-To be done.
-My purpose is to publish this library as a nuget package.
+nuget package available
+https://www.nuget.org/packages/Dilan.GrpcServiceDiscovery.Grpc
+
 
 ### The Blazor Server app
 
