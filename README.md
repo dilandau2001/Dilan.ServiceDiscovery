@@ -4,6 +4,8 @@
 
 [![NuGet version (Dilan.GrpcServiceDiscovery.Grpc)](https://img.shields.io/nuget/v/Dilan.GrpcServiceDiscovery.Grpc?style=flat-square)](https://www.nuget.org/packages/Dilan.GrpcServiceDiscovery.Grpc/)
 
+![Code Coverage](https://img.shields.io/badge/Code%20Coverage-70%25-yellow?style=flat)
+
 This library provides a fast, easy to setup way to implement a discovery service pattern within any .NET solution/project.
 Although there are several other more complex solutions out there that you might have consider, this one of mine have some features you might find matching your problem
 as it matched mine.
