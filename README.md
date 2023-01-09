@@ -85,7 +85,7 @@ Where
 - options: Where the server option lie.
 - client: multicast client that is used for the autodiscovery feature if configured.
 
-If you are not using dependency injection, and you like default options, you would createa an instance and start your discovery server like this:
+If you are not using dependency injection, and you like default options, you would create an instance and start your discovery server like this:
 
 ```
         var options = new ServiceConfigurationOptions();
@@ -221,7 +221,7 @@ Where
 - options: Where the client options lie.
 - multicastClient: multicast client that is used for the autodiscovery feature if configured.
 
-If you are not using dependency injection, and you like default options, you would instance and start your discovery server like this:
+If you are not using dependency injection, and you like default options, you would instance and start your discovery client like this:
 
 ```
         var options = new ClientConfigurationOptions();
@@ -322,4 +322,4 @@ would be to make the server give you the "best" one, where the best should follo
 
 ## License
 
-[MIT © Guillermo Alías](../LICENSE)
+[MIT Â© Guillermo AlÃ­as](../LICENSE)
