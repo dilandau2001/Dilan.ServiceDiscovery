@@ -33,7 +33,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// <summary>
         /// Start service. If Rx type selected this function will start reception thread
         /// </summary>
-        void StartService(int port, string multicastGroup, int ttl = 1);
+        bool StartService(int port, string multicastGroup, int ttl = 1);
 
         /// <summary>
         /// Stop Service. If Type= RX Reception thread will close
@@ -46,7 +46,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// <param name="multicastGroup"></param>
         /// <param name="rxPort"></param>
         /// <param name="timeToLive"></param>
-        void JoinMulticastGroup(string multicastGroup, int rxPort, int timeToLive = 1);
+        bool JoinMulticastGroup(string multicastGroup, int rxPort, int timeToLive = 1);
 
         /// <summary>
         /// Send Data to destination Ip and Port

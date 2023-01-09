@@ -100,6 +100,9 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                     network.Description.ToLower().Contains("virtual") ||
                     network.Description.ToLower().Contains("pseudo"))
                     continue;
+
+                if (!network.SupportsMulticast)
+                    continue;
                 
                 // Each network interface may have multiple IP addresses
                 foreach (var address in properties.UnicastAddresses.Select(n=>n.Address))

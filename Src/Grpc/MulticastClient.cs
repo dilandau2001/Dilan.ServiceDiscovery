@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -75,25 +76,30 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// <summary>
         /// Start service. If Rx type selected this function will start reception thread
         /// </summary>
-        public void StartService(int port, string multicastGroup, int ttl = 1)
+        public bool StartService(int port, string multicastGroup, int ttl = 1)
         {
             using (Logger.BeginScope(nameof(StartService)))
             {
                 if (Enabled)
                 {
                     Logger.LogDebug("Already enabled");
-                    return;
+                    return true;
                 }
 
                 ReceivePort = port;
                 MulticastGroup = multicastGroup;
-                JoinMulticastGroup(multicastGroup, port, ttl);
-                
+                bool joined = JoinMulticastGroup(multicastGroup, port, ttl);
+
+                if (!joined)
+                    return false;
+
                 _receiverThread = new Thread(ReceiveThread);
                 _receiverThread.Start();
                 
                 Enabled = true;
                 Logger.LogInformation($"Multicast service listening on port {port}");
+
+                return true;
             }
         }
         
@@ -153,15 +159,24 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// <param name="multicastGroup"></param>
         /// <param name="rxPort"></param>
         /// <param name="timeToLive"></param>
-        public void JoinMulticastGroup(string multicastGroup, int rxPort, int timeToLive = 1)
+        public bool JoinMulticastGroup(string multicastGroup, int rxPort, int timeToLive = 1)
         {
             MulticastGroup = multicastGroup;
             var list = StaticHelpers.GetAllLocalIpAddress();
+
+            if (!list.Any())
+            {
+                Logger.LogError("There is no network available to Join multicast group");
+                return false;
+            }
             
             foreach (var s in list)
             {
+                Logger.LogTrace($"Joining multicast group {multicastGroup} on network card address {s}");
                 JoinMulticastGroup(multicastGroup, rxPort, timeToLive, s);
             }
+
+            return true;
         }
 
         /// <summary>
