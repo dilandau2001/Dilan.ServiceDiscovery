@@ -112,13 +112,13 @@ namespace BlazorServerAppTests.IntegrationTests
             public async Task WhenRegistrationTimesOutThenServiceIsOffline()
             {
                 // Arrange
-                await _client1.Start();
+                await _client.Start();
 
                 // Act
-                await _client1.Stop();
-                await Task.Delay(TimeSpan.FromSeconds(_sut.Options.TimeOutInSeconds + 2));
+                await _client.Stop();
+                await Task.Delay(TimeSpan.FromSeconds(_sut.Options.TimeOutInSeconds + 5));
                 
-                var res = await _client1.FindService(_client1.Options.ServiceName);
+                var res = await _client.FindService(_client.Options.ServiceName);
 
                 // Assert
                 Assert.Single(_sut.ServiceDictionary);
@@ -146,6 +146,9 @@ namespace BlazorServerAppTests.IntegrationTests
             public Task DisposeAsync()
             {
                 _sut.Dispose();
+                _client.Dispose();
+                _client1.Dispose();
+                _client2.Dispose();
                 return Task.CompletedTask;
             }
 
