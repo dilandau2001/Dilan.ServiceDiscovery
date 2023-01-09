@@ -63,8 +63,8 @@ https://www.nuget.org/packages/Dilan.GrpcServiceDiscovery.Grpc
 
 ### The Blazor Server app
 
-To be done.
-My purpose is to publish it as a zip and link it to this readme. 
+See release assets:
+https://github.com/dilandau2001/Dilan.ServiceDiscovery/releases
 
 ## Usage
 
