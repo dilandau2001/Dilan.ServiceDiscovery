@@ -25,6 +25,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ValidationTests", "Test\ValidationTests\ValidationTests.csproj", "{75DC77C2-DD11-4145-AD90-C377F30B1137}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{D9D2B1AB-265B-4966-A42C-5BC82AE89881}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D9D2B1AB-265B-4966-A42C-5BC82AE89881}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D9D2B1AB-265B-4966-A42C-5BC82AE89881}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75DC77C2-DD11-4145-AD90-C377F30B1137}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75DC77C2-DD11-4145-AD90-C377F30B1137}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75DC77C2-DD11-4145-AD90-C377F30B1137}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75DC77C2-DD11-4145-AD90-C377F30B1137}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -62,6 +68,7 @@ Global
 		{3AC67C71-DE87-49B4-8ED7-BE0E82308104} = {80EA839B-E3AB-4829-A6A3-2F0E723A43CB}
 		{148BC950-1DC6-400D-9D06-991AC90CAE67} = {A60DA900-790C-4D85-870B-A5EE220E6887}
 		{D9D2B1AB-265B-4966-A42C-5BC82AE89881} = {80EA839B-E3AB-4829-A6A3-2F0E723A43CB}
+		{75DC77C2-DD11-4145-AD90-C377F30B1137} = {A60DA900-790C-4D85-870B-A5EE220E6887}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {409FC92A-4F0D-4DF0-974F-22D8E119A4EF}
