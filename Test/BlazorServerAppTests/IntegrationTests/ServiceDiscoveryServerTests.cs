@@ -15,7 +15,8 @@ namespace BlazorServerAppTests.IntegrationTests
                 var options = new ServiceConfigurationOptions
                 {
                     EnableAutoDiscover = false,
-                    RefreshTimeInSeconds = 10
+                    RefreshTimeInSeconds = 10,
+                    TimeOutInSeconds = 2
                 };
 
                 var multicastClient = new MulticastClient(loggerProvider.CreateLogger<MulticastClient>());

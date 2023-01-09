@@ -17,6 +17,7 @@
         {
             // Arrange
             server.Logger = _loggerProvider.CreateLogger<MulticastClient>();
+            client.Logger = _loggerProvider.CreateLogger<MulticastClient>();
             MulticastData? data = null;
             server.DataReceived += (sender, e) =>
             {
@@ -31,7 +32,6 @@
             client.Send("test", multicastGroup, testPort);
 
             SpinWait.SpinUntil(() => data != null, TimeSpan.FromSeconds(5));
-
 
             // Assert
             Assert.NotNull(data);
