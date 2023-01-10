@@ -295,7 +295,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                     {
                         byte[] dataReceived = udpClient.Receive(ref sourceIp);
                         var str = Encoding.Default.GetString(dataReceived);
-                        Logger.LogDebug($"Reveided {str} from {sourceIp}");
+                        Logger.LogDebug($"Received {str} from {sourceIp}");
 
                         DataReceived?.Invoke(this, new MulticastData
                         {

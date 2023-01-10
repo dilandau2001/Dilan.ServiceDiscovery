@@ -1,9 +1,33 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Logging;
 
 namespace Dilan.GrpcServiceDiscovery.Grpc
 {
+    public class ScopeProvider : IDisposable
+    {
+        public Queue<string> Scopes { get; }
+
+        public ScopeProvider()
+        {
+            Scopes = new Queue<string>();
+        }
+
+        public IDisposable Push(string state)
+        {
+            Scopes.Enqueue(state);
+            return this;
+        }
+
+        public void Dispose()
+        {
+            if (Scopes.Any())
+                Scopes.Dequeue();
+        }
+    }
+
     /// <summary>
     /// Implementation of an ILogger that prints to console.
     /// </summary>
@@ -15,13 +39,13 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// </summary>
         public ConsoleLogger()
         {
-            _scopeProvider = new LoggerExternalScopeProvider();
+            _scopeProvider = new ScopeProvider();
         }
 
         /// <summary>
         /// Scope provider.
         /// </summary>
-        private readonly LoggerExternalScopeProvider _scopeProvider;
+        private readonly ScopeProvider _scopeProvider;
 
         #region Implementation of ILogger
         
@@ -38,7 +62,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// <typeparam name="TState"></typeparam>
         /// <param name="state"></param>
         /// <returns></returns>
-        public IDisposable BeginScope<TState>(TState state) => _scopeProvider.Push(state);
+        public IDisposable BeginScope<TState>(TState state) => _scopeProvider.Push(state.ToString());
 
         /// <summary>
         /// Prints message to the console.
@@ -52,11 +76,11 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 .Append("] ");
 
             // Append scopes
-            _scopeProvider.ForEachScope((scope, s) =>
+            foreach (var scope in _scopeProvider.Scopes)
             {
-                s.Append(" => ");
-                s.Append(scope);
-            }, sb);
+                sb.Append(" => ");
+                sb.Append(scope);
+            }
 
             if (exception != null)
             {

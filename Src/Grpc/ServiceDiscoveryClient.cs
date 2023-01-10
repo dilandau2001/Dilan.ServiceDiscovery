@@ -23,6 +23,9 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         private int _refreshTime;
         private readonly IMulticastClient _multicastClient;
         private readonly IEnumerable<IMetadataProvider> _metadataProviders;
+        private string _discoveryServerHost;
+        private int _discoveryServerPort;
+        private bool _discoveryFound;
 
         public enum States
         {
@@ -267,6 +270,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
 
                 builder.In(States.Connected)
                     .ExecuteOnEntry(ConnectedOnEnter)
+                    .ExecuteOnExit(ConnectedOnExit)
                     .On(Events.DisconnectionRequested).Goto(States.NotConnected)
                     .On(Events.TimerFired).Execute(ExecuteRegistration)
                     .On(Events.ConnectionFailed).Goto(States.Connecting);
@@ -282,10 +286,17 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             _multicastClient.StopService();
         }
 
-        private void AutoDiscoveringOnEnter()
+        private async Task AutoDiscoveringOnEnter()
         {
             State = States.AutoDiscovering;
-            _multicastClient.StartService(Options.AutoDiscoverPort, Options.AutoDiscoverMulticastGroup);
+            bool success = _multicastClient.StartService(Options.AutoDiscoverPort, Options.AutoDiscoverMulticastGroup);
+
+            // If unable to join a multicast group then auto-discover cannot work.
+            if (!success)
+            {
+                Logger.LogError("Error. Automation was not able to join any multicast group for the autodiscovery feature. Is there any network allowing multicast?");
+                await _machine.Fire(Events.AutoDiscoveringFinished);
+            }
         }
         
         private void MulticastClientOnDataReceived(object sender, MulticastData e)
@@ -297,8 +308,9 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             
             try
             {
-                Options.DiscoveryServerHost = split[0].Split('=')[1];
-                Options.Port = int.Parse(split[1].Split('=')[1]);
+                _discoveryServerHost = e.Source.Address.ToString();
+                _discoveryServerPort = int.Parse(split[1].Split('=')[1]);
+                _discoveryFound = true;
                 _machine.Fire(Events.AutoDiscoveringFinished);
             }
             catch (Exception exception)
@@ -321,19 +333,30 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             }
         }
 
+        private void ConnectedOnExit()
+        {
+            using (Logger.BeginScope(nameof(ConnectedOnExit)))
+            {
+                _discoveryFound = false;
+            }
+        }
+
         private async Task ConnectingOnEnter()
         {
             using (Logger.BeginScope(nameof(ConnectingOnEnter)))
             {
                 State = States.Connecting;
 
-                if (string.IsNullOrEmpty(Options.DiscoveryServerHost))
+                if (string.IsNullOrEmpty(Options.DiscoveryServerHost) && !_discoveryFound)
                 {
                     await _machine.Fire(Events.AutoDiscoveringNeeded);
                     return;
                 }
 
-                var address = "http://" + Options.DiscoveryServerHost + ":" + Options.Port;
+                string discoveryServerHost = _discoveryFound ? _discoveryServerHost : Options.DiscoveryServerHost;
+                int discoveryServerPort = _discoveryFound ? _discoveryServerPort : Options.Port;
+
+                var address = "http://" + discoveryServerHost + ":" + discoveryServerPort;
                 var channel = GrpcChannel.ForAddress(
                     address,
                     new GrpcChannelOptions

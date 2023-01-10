@@ -183,6 +183,8 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         private void TempoOnElapsed(object sender, ElapsedEventArgs e)
         {
             string mainIp = StaticHelpers.GetLocalIpAddress();
+            Logger.LogTrace($"Ip found is {mainIp}");
+
             string sms = $"DiscoveryServerIp={mainIp};Port={Options.Port}";
             _client.Send(sms, Options.AutoDiscoverPort);
         }
