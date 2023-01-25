@@ -1,0 +1,24 @@
+// Working example of Power shell code that is able to generate a self-signed certificate with exportable private key.
+
+$certFilePath = "C:\certs"
+$certStoreLocation = "Cert:\LocalMachine\My"
+$pwd = "dilandau2001"
+
+$cert = New-SelfSignedCertificate `
+    -KeyFriendlyName "dilan.ServiceDiscovery" `
+    -KeyDescription "Dilan Service discovery" `
+    -KeyAlgorithm "RSA" `
+    -DnsName "dilan.ServiceDiscovery" `
+    -NotBefore (Get-Date).AddYears(-1) `
+    -NotAfter (Get-Date).AddYears(50) `
+    -KeyUsage CertSign, CRLSign, DataEncipherment, DigitalSignature, NonRepudiation `
+    -KeyUsageProperty All `
+    -KeyLength 2048 `
+    -CertStoreLocation $certStoreLocation `
+    -KeyExportPolicy Exportable `
+    -KeyProtection None `
+    -Type Custom
+
+$certThumb = $cert.Thumbprint
+$certPath = "$certStoreLocation\$certThumb"
+$cert | Export-PfxCertificate -FilePath "$certFilePath\$certThumb.pfx" -Password (ConvertTo-SecureString -String $pwd -AsPlainText -Force)

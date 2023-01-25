@@ -14,10 +14,13 @@ as it matched mine.
 - This library comes with both server and client side implemented in a single dll.
 - This library does not make use of Core Web app libraries to accompish its purpose. Most of discovery services out there are based on Web apps, which in the C# core world it means to have a strong dependency on Core Web app libraries and their dependency hell. You won't be able to have Full framework services and use Web Apps with updated libraries.
 - This library is coded having dependency injection in mind. Most behaviours can be configured and changed by modifying registered items in whatever injection framework you decide to use.
-- This library comes with an auto-discover logic that reduces the number of parameters to be configured. 
+- This library comes with an auto-discover logic that reduces the number of parameters to be configured.
+- This library supports SSL serurity.
 
-For every logic I strong believe in the use of state machines. I really like the use of Appcelerator as my state machine framework and that is one of the few dependencies this library has from nuget.
-The other one is GRPC. GRPC is very popular nowadays as a fast and reiable communincation system which is Open Source, supported by Google and multiplatform.
+
+Dependencies:
+- For every logic I strong believe in the use of state machines. I really like the use of Appcelerator as my state machine framework and that is one of the few dependencies this library has from nuget.
+- The other one is GRPC. GRPC is very popular nowadays as a fast and reiable communincation system which is Open Source, supported by Google and multiplatform.
 
 The BlazorServer that is also available in this library is just a front end of the server logic and thus, its use is optional. If you prefer running the discovery server in other application you can do so very easily.
 
@@ -154,9 +157,48 @@ Server options are:
         public int AutoDiscoverPort { get; set; } = 5478;
 
         /// <summary>
-        /// Auto discovery send data frequency. Describes how often the server is sending the autodiscovery message to all available networks.
+        /// Auto discovery send data frequency.
         /// </summary>
         public int AutoDiscoverFreq { get; set; } = 5;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether [use secure connection].
+        /// If secure connection is true and certificate name is found in the machine.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [use secure connection]; otherwise, <c>false</c>.
+        /// </value>
+        public bool UseSecureConnection { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets the name of the certificate issuer name.
+        /// </summary>
+        /// <value>
+        /// The name of the certificate issuer name.
+        /// </value>
+        public string CertificateIssuerName { get; set; } = "dilan.ServiceDiscovery";
+
+        /// <summary>
+        /// Gets or sets a value indicating whether [use certificate file].
+        /// If this setting is set to true and UseSecureConnection is true then the Certificate file
+        /// is searched inside the application folder.
+        /// If this setting is false, then the certificate is searched in the Computer certificate repository.
+        /// (In windows the Manage Workstation Certificates)
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [user certificate file]; otherwise, <c>false</c>.
+        /// </value>
+        public bool UseCertificateFile { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets the use certificate file password.
+        /// When UseCertificateFile is used, in order to open the certificate file name.pfx you need
+        /// to pass the password in order to get the private key.
+        /// </summary>
+        /// <value>
+        /// The use certificate file password.
+        /// </value>
+        public string UseCertificateFilePassword { get; set; } = "dilandau2001";
 
 ```
 
@@ -255,6 +297,7 @@ Client options are the following:
         /// <summary>
         /// Host name of ip of discovery server service.
         /// Client will used to make calls to it.
+        /// If empty, then auto discover will be used automatically.
         /// </summary>
         public string DiscoveryServerHost { get; set; }
 
@@ -277,11 +320,14 @@ Client options are the following:
         /// <summary>
         /// Auto discovery multicast group.
         /// If DiscoveryServerHost is empty. Then auto discovery is used.
+        /// The client subscribes to this multicast group waiting for specific broadcasts coming from the server side.
         /// </summary>
         public string AutoDiscoverMulticastGroup { get; set; } = "224.0.0.100";
 
         /// <summary>
         /// Auto discovery multicast port.
+        /// The client waits for messages coming from the server in this port, only if auto discovery is enabled.
+        /// (See DiscoveryServerHost)
         /// </summary>
         public int AutoDiscoverPort { get; set; } = 5478;
 
@@ -289,7 +335,32 @@ Client options are the following:
         /// Default client scope. Similar to a tag, domain, or environment where this client is under.
         /// It allows you to group this client as part of a set of clients of different services.
         /// </summary>
-        public string Scope { get; set; }
+        public string Scope { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether [use secure connection].
+        /// If secure connection is true and certificate name is found in the machine.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [use secure connection]; otherwise, <c>false</c>.
+        /// </value>
+        public bool UseSecureConnection { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether [allow invalid certificates] is enabled.
+        /// If enabled, invalid certificates like self-signed or untrusted certificates will be accepted.
+        /// By using an untrusted invalid certificate you are encrypting the communication from end 2 end
+        /// but you will be not safe against a man in the middle attack.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [allow invalid certificates]; otherwise, <c>false</c>.
+        /// </value>
+        /// <remarks>Configuring the SSL communication is always a difficult task.
+        /// You need to create a proper certificate for the server part.
+        /// As a rule of thumb the issuer name usually matches the machine name, or dns of the server machine, where the server is running,
+        /// and the client should reach it using this dns and not the ip. Also the certification provider authority should be trusted by the client.
+        /// For Self-signed certificates you could achieve this trust by adding server certificate to the Trusted authorities in the client side.</remarks>
+        public bool AllowInvalidCertificates { get; set; } = true;
 ```
 
 ## API
@@ -317,7 +388,6 @@ PRs accepted and I will be really greatfull for them.
 ## Pending
 
 There are several things I haven't addressed yet.
-- Enable grpc ssl communication. Right now I am using grpc unsecure connection which means, messages can be read using wireshark or similar sniffer.
 - Create a DNS resolver logic. Current implemtentation allows you to ask discovery server for the list of services that matches your request. The idea of this feature
 would be to make the server give you the "best" one, where the best should follow a configured logic. In other words, the server would potentially become a load balancer.
 - prepare the BlazorServer app dockerization file. Currently learning about it.

@@ -6,6 +6,8 @@ using Grpc.Net.Client;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -355,16 +357,52 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
 
                 string discoveryServerHost = _discoveryFound ? _discoveryServerHost : Options.DiscoveryServerHost;
                 int discoveryServerPort = _discoveryFound ? _discoveryServerPort : Options.Port;
-
-                var address = "http://" + discoveryServerHost + ":" + discoveryServerPort;
-                var channel = GrpcChannel.ForAddress(
-                    address,
-                    new GrpcChannelOptions
+                
+                if (Options.UseSecureConnection)
+                {
+                    var httpClientHandler = new HttpClientHandler();
+                    
+                    // Return `true` to allow certificates that are untrusted/invalid
+                    httpClientHandler.ServerCertificateCustomValidationCallback = (message, certificate2, arg3, arg4) =>
                     {
-                        Credentials = ChannelCredentials.Insecure
-                    });
+                        if (Options.AllowInvalidCertificates)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            Logger.LogError($"Invalid Certificate: {message}, {certificate2}, {arg3}, {arg4}");
+                            return false;
+                        }
+                    };
+                    
+                    var httpClient = new HttpClient(httpClientHandler);
+
+                    var address = "https://" + discoveryServerHost + ":" + discoveryServerPort;
+                    var channel = GrpcChannel.ForAddress(
+                        address,
+                        new GrpcChannelOptions
+                        {
+                            Credentials = ChannelCredentials.SecureSsl,
+                            HttpClient = httpClient
+                        });
             
-                _client = new DiscoveryService.DiscoveryServiceClient(channel);
+                    _client = new DiscoveryService.DiscoveryServiceClient(channel);
+                }
+                else
+                {
+                    var address = "http://" + discoveryServerHost + ":" + discoveryServerPort;
+                    var channel = GrpcChannel.ForAddress(
+                        address,
+                        new GrpcChannelOptions
+                        {
+                            Credentials = ChannelCredentials.Insecure
+                        });
+            
+                    _client = new DiscoveryService.DiscoveryServiceClient(channel);
+                }
+
+                
 
                 await ExecuteRegistration();
             }

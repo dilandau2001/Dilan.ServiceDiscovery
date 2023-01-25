@@ -2,6 +2,11 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Dynamic;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -76,8 +81,27 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
 
                 var port = Options.Port;
                 _server = new Server();
-                _server.Services.Add(DiscoveryService.BindService(this)); 
-                _server.Ports.Add(new ServerPort("0.0.0.0", port, ServerCredentials.Insecure)); 
+                _server.Services.Add(DiscoveryService.BindService(this));
+
+                X509Certificate2 cert = CertificateExporter.FindCertificate(Options.CertificateIssuerName);
+
+                if (Options.UseCertificateFile)
+                {
+                    cert = new X509Certificate2(Options.CertificateIssuerName + ".pfx", Options.UseCertificateFilePassword, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
+                }
+                
+                if (Options.UseSecureConnection && cert != null)
+                {
+                    Logger.LogTrace("Using secure credentials");
+                    var sslCredentials = CertificateExporter.CreateSslServerCredentials(cert);
+                    _server.Ports.Add(new ServerPort("0.0.0.0", port, sslCredentials));   
+                }
+                else
+                {
+                    Logger.LogTrace("Using insecure");
+                    _server.Ports.Add(new ServerPort("0.0.0.0", port, ServerCredentials.Insecure));     
+                }
+                
                 
                 Logger.LogTrace("Starting service in port " + port);
                 _server.Start();
@@ -91,6 +115,17 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 }
             }
         }
+
+
+        private static string ExportToPem(X509Certificate cert)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("-----BEGIN CERTIFICATE-----");
+            builder.AppendLine(Convert.ToBase64String(cert.Export(X509ContentType.Cert),Base64FormattingOptions.InsertLineBreaks));
+            builder.AppendLine("-----END CERTIFICATE-----");
+
+            return builder.ToString();
+        } 
 
         /// <summary>
         /// 
