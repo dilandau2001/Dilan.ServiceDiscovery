@@ -83,14 +83,16 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 _server = new Server();
                 _server.Services.Add(DiscoveryService.BindService(this));
 
-                X509Certificate2 cert = CertificateExporter.FindCertificate(Options.CertificateIssuerName);
+                X509Certificate2 cert = null;
 
-                if (Options.UseCertificateFile)
+                if (Options.UseSecureConnection)
                 {
-                    cert = new X509Certificate2(Options.CertificateIssuerName + ".pfx", Options.UseCertificateFilePassword, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
+                    cert = Options.UseCertificateFile ?
+                        new X509Certificate2(Options.CertificateIssuerName + ".pfx", Options.UseCertificateFilePassword, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet) :
+                        CertificateExporter.FindCertificate(Options.CertificateIssuerName);
                 }
                 
-                if (Options.UseSecureConnection && cert != null)
+                if (cert != null)
                 {
                     Logger.LogTrace("Using secure credentials");
                     var sslCredentials = CertificateExporter.CreateSslServerCredentials(cert);

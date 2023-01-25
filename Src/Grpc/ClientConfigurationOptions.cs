@@ -72,7 +72,7 @@
         /// <value>
         ///   <c>true</c> if [use secure connection]; otherwise, <c>false</c>.
         /// </value>
-        public bool UseSecureConnection { get; set; } = true;
+        public bool UseSecureConnection { get; set; } = false;
 
         /// <summary>
         /// Gets or sets a value indicating whether [allow invalid certificates] is enabled.

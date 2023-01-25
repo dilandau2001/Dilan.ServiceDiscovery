@@ -62,7 +62,7 @@
         ///   <c>true</c> if [use secure connection]; otherwise, <c>false</c>.
         /// </value>
         /// <remarks>If security is enable you won't be able to communicate 2 full framework apps. 6-6 ok, and 6-4.8 ok, but 4.8-4.8 not ok.</remarks>
-        public bool UseSecureConnection { get; set; } = true;
+        public bool UseSecureConnection { get; set; } = false;
 
         /// <summary>
         /// Gets or sets the name of the certificate issuer name.

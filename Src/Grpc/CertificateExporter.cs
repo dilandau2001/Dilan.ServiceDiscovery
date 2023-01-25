@@ -43,7 +43,16 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         {
             using (X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
             {
-                store.Open(OpenFlags.ReadOnly);
+                try
+                {
+                    store.Open(OpenFlags.ReadOnly);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    return null;
+                }
+                
                 X509Certificate2Collection certCollection = store.Certificates.Find(X509FindType.FindByIssuerName, certificateSubjectDistinguishedName, false);
                 X509Certificate2 cert = null;
                 if (certCollection.Count > 0)
