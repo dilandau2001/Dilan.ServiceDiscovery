@@ -1,6 +1,5 @@
 using Dilan.GrpcServiceDiscovery.BlazorServer.Data;
 using Dilan.GrpcServiceDiscovery.Grpc;
-using Microsoft.AspNetCore.Hosting.Server;
 
 // Read configuration from appSettings.
 var config = new ConfigurationBuilder()
@@ -13,9 +12,10 @@ config
     .Bind(options);
 
 var builder = WebApplication.CreateBuilder(args);
+var httpPort = builder.Configuration.GetValue<int>("HttpPort");
+var httpsPort = builder.Configuration.GetValue<int>("HttpsPort");
 
 // Configure logger
-//builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 // Add services to the container.
@@ -26,6 +26,14 @@ builder.Services.AddSingleton(options);
 builder.Services.AddSingleton<IServerManagerLogic, ServerManagerLogic>();
 builder.Services.AddSingleton<ServiceDiscoveryService>();
 builder.Services.AddSingleton<IMulticastClient, MulticastClient>();
+builder.WebHost.ConfigureKestrel(opt =>
+{
+    opt.ListenAnyIP(httpPort);
+    opt.ListenAnyIP(httpsPort, listenOptions =>
+    {
+        listenOptions.UseHttps(options.CertificateIssuerName + ".pfx", options.UseCertificateFilePassword);
+    });
+});
 
 // Build container
 var app = builder.Build();
