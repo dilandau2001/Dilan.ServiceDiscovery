@@ -2,11 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -87,6 +83,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
 
                 if (Options.UseSecureConnection)
                 {
+                    Logger.LogTrace("Search for certificate");
                     cert = Options.UseCertificateFile ?
                         new X509Certificate2(Options.CertificateIssuerName + ".pfx", Options.UseCertificateFilePassword, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet) :
                         CertificateExporter.FindCertificate(Options.CertificateIssuerName);
@@ -117,17 +114,6 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 }
             }
         }
-
-
-        private static string ExportToPem(X509Certificate cert)
-        {
-            StringBuilder builder = new StringBuilder();
-            builder.AppendLine("-----BEGIN CERTIFICATE-----");
-            builder.AppendLine(Convert.ToBase64String(cert.Export(X509ContentType.Cert),Base64FormattingOptions.InsertLineBreaks));
-            builder.AppendLine("-----END CERTIFICATE-----");
-
-            return builder.ToString();
-        } 
 
         /// <summary>
         /// 

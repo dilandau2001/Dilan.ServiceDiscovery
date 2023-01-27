@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -29,11 +28,29 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         private int _discoveryServerPort;
         private bool _discoveryFound;
 
+        /// <summary>
+        /// Possible client states
+        /// </summary>
         public enum States
         {
+            /// <summary>
+            /// Initial, not started, not connected state.
+            /// </summary>
             NotConnected,
+
+            /// <summary>
+            /// Auto discovering state. The client is waiting for multicast message in the configured group and port.
+            /// </summary>
             AutoDiscovering,
+
+            /// <summary>
+            /// Connecting state. The client already knows where a server is and is trying to register in it.
+            /// </summary>
             Connecting,
+
+            /// <summary>
+            /// Connected. The client was able to reach the server and it is already registered.
+            /// </summary>
             Connected
         }
 
