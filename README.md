@@ -15,12 +15,12 @@ as it matched mine.
 - This library does not make use of Core Web app libraries to accompish its purpose. Most of discovery services out there are based on Web apps, which in the C# core world it means to have a strong dependency on Core Web app libraries and their dependency hell. You won't be able to have Full framework services and use Web Apps with updated libraries.
 - This library is coded having dependency injection in mind. Most behaviours can be configured and changed by modifying registered items in whatever injection framework you decide to use.
 - This library comes with an auto-discover logic that reduces the number of parameters to be configured.
-- This library supports SSL serurity.
+- This library supports SSL security.
 
 
 Dependencies:
 - For every logic I strong believe in the use of state machines. I really like the use of Appcelerator as my state machine framework and that is one of the few dependencies this library has from nuget.
-- The other one is GRPC. GRPC is very popular nowadays as a fast and reiable communincation system which is Open Source, supported by Google and multiplatform.
+- The other one is GRPC. GRPC is very popular nowadays as a fast and reliable communication system which is Open Source, supported by Google and multi-platform.
 
 The BlazorServer that is also available in this library is just a front end of the server logic and thus, its use is optional. If you prefer running the discovery server in other application you can do so very easily.
 
@@ -38,15 +38,15 @@ The BlazorServer that is also available in this library is just a front end of t
 ## Background
 
 The need for this library came from a project I was working on where we had several web apps that were develop using Core 2.0. Those appps were dependant on Microsoft
-core web app packages. In this project we also had some services running as windows service, using framework 4.8 and we were lucky or unlucky to share several common libraries as those services were also making use of Microsoft web packages for healtchecks.
+core web app packages. In this project we also had some services running as windows service, using framework 4.8 and we were lucky or unlucky to share several common libraries as those services were also making use of Microsoft web packages for health checks.
 Due to cybersecurity reasons we were forced to upgrade our web apps to updated versions of Core.Web libraries, which seemed to be impossible without destroying many things, because new libraries were not compatible with 4.8 framework.
 
 By using this discovery service pattern that is based in GRCP we were able to reduce services configuration and the dependency on Core.Web libraries. (which by the way is a real pain)
 
-I know is not the current trend, where everything has to be a wep application to be "modern", but this is a clean solution to have a discovery server pattern that woulld be used with several different services wihout adding a ton of core.web dependencies
-and allowing having functionality between full framework and modern apps, while still being multi platform.
+I know is not the current trend, where everything has to be a wep application to be "modern", but this is a clean solution to have a discovery server pattern that would be used with several different services wihout adding a ton of core.web dependencies
+and allowing having functionality between full framework and updated web apps, while still being multi platform.
 
-With this library you will be able to still have old style window services, that can register into the service discovery and be communicated with.
+With this library you will be able to still have old style window full framework services, that can register into the service discovery and be communicated with.
 With the same library you can have state of the art web apps that can register into the service discovery and be communicated with.
 
 This discovery server now becames a healthCheck provider, a DNS server and a load balancer, all together in a small, efficient and fast web application.
@@ -57,8 +57,7 @@ This library comes in two assemblies:
 
 ## Install
 
-Easiest way is download the code and compile it.
-But I am planning some improvements for installation.
+Easiest way is download the code and compile it. You can also get it from nuget or from github releases.
 
 ### The Library
 
