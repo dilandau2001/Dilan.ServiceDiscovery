@@ -152,7 +152,9 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
 
                 try
                 {
-                    _logic.AddOrUpdate(request);
+                    var model = _logic.AddOrUpdate(request);
+                    response.ServiceId = model.Id;
+                    response.Principal = model.Principal;
                 }
                 catch (Exception e)
                 {
@@ -183,7 +185,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 try
                 {
                     var items = _logic.FindService(request.Name, request.Scope);
-                    response.Services.AddRange(items);
+                    items.ForEach(n=>response.Services.Add(n.ToServiceDto()));
                 }
                 catch (Exception e)
                 {

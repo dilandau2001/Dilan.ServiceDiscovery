@@ -6,10 +6,28 @@ using System.Timers;
 
 namespace Dilan.GrpcServiceDiscovery.Grpc
 {
+    /// <summary>
+    /// Implementation of the server manager logic.
+    /// </summary>
     public sealed class ServerManagerLogic : IServerManagerLogic
     {
         private readonly ServiceConfigurationOptions _options;
         private readonly Timer _tempo;
+
+        /// <summary>
+        /// Dictionary where key is tokenPassing group and value is service model identifier.
+        /// Only one identifier per group can exist.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, string> _tokenPassingDictionary = new ConcurrentDictionary<string, string>();
+
+        /// <summary>
+        /// Cached list of valid servers with service name as key.
+        /// Always keep the list of valid services (enabled and healthy) given the service name.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, ServiceModel>> _cachedValid =
+            new ConcurrentDictionary<string, ConcurrentDictionary<string, ServiceModel>>();
+
+        private bool _disposed;
 
         /// <summary>
         /// Initializes a new instance of the ServerManagerLogic class.
@@ -38,11 +56,11 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// Add or updates service list.
         /// </summary>
         /// <param name="dto"></param>
-        public void AddOrUpdate(ServiceDto dto)
+        public ServiceModel AddOrUpdate(ServiceDto dto)
         {
             if (dto == null)
             {
-                return;
+                return null;
             }
 
             var id = GiveId(dto);
@@ -54,26 +72,58 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             }
             else
             {   
-                AddOrUpdateContinueDoesNotExists(dto);
+                model = AddOrUpdateContinueDoesNotExists(dto, id);
             }
 
+            EvaluatePrincipal(model, true);
             ContinueUpdate();
+            return model;
         }
 
         /// <summary>
         /// Returns the list of services that are healthy.
-        /// </summary>
+        /// </summary>1
         /// <param name="serviceName"></param>
         /// <param name="scope"></param>
         /// <returns></returns>
-        public List<ServiceDto> FindService(string serviceName, string scope = "")
+        public List<ServiceModel> FindService(string serviceName, string scope = "")
         {
-            return ServiceDictionary
-                .Values
-                .Where(n=> scope == string.Empty || n.Scope!= null && scope != string.Empty && n.Scope.ToLower().Contains(scope.ToLower()))
-                .Where(n=>n.ServiceName.ToLower().Contains(serviceName.ToLower()) && n.HealthState == EnumServiceHealth.Healthy && n.Enabled)
-                .Select(n=> n.ToServiceDto())
+            var serviceNameToLower = serviceName.ToLower();
+
+            _cachedValid.TryGetValue(serviceNameToLower, out ConcurrentDictionary<string, ServiceModel> initial);
+
+            if (initial == null)
+                return new List<ServiceModel>();
+            
+            if (string.IsNullOrEmpty(scope))
+                return initial.Values.ToList();
+
+            return initial.Values
+                .Where(n=> n.Scope!= null && n.Scope.ToLower().Contains(scope.ToLower()))
                 .ToList();
+        }
+
+        /// <summary>
+        /// Forces a refresh.
+        /// </summary>
+        public void ForceRefresh()
+        {
+            foreach (ServiceModel item in ServiceDictionary.Values)
+            {
+                EvaluatePrincipal(item, false);
+
+                if (item.HealthState == EnumServiceHealth.Offline)
+                {
+                    continue;
+                }
+
+                if (item.TimeoutTime < DateTimeOffset.Now)
+                {
+                    item.HealthState = EnumServiceHealth.Offline;
+                }
+            }
+
+            ContinueUpdate();
         }
 
         #region IDisposable
@@ -81,6 +131,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
         public void Dispose()
         {
+            _disposed = true;
             _tempo.Stop();
             _tempo.Elapsed -= TempoOnElapsed;
         }
@@ -146,10 +197,12 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// Add or update when service not in the list.
         /// </summary>
         /// <param name="comingDto"></param>
-        private void AddOrUpdateContinueDoesNotExists(ServiceDto comingDto)
+        /// <param name="id">Unique identifier of this service.</param>
+        private ServiceModel AddOrUpdateContinueDoesNotExists(ServiceDto comingDto, string id)
         {
             var model = new ServiceModel
             {
+                Id = id,
                 ServiceName = comingDto.ServiceName,
                 Address = comingDto.ServiceHost,
                 Port = comingDto.ServicePort,
@@ -163,6 +216,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             model.UpdateMetadata(comingDto.Metadata);
 
             ServiceDictionary.TryAdd(GiveId(comingDto), model);
+            return model;
         }
         
         /// <summary>
@@ -170,18 +224,62 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// </summary>
         private void TempoOnElapsed(object sender, ElapsedEventArgs e)
         {
-            foreach (var item in ServiceDictionary.Values)
-            {
-                if (item.HealthState == EnumServiceHealth.Offline)
-                    continue;
+            _tempo.Stop();
+            ForceRefresh();
 
-                if (item.TimeoutTime < DateTimeOffset.Now)
-                {
-                    item.HealthState = EnumServiceHealth.Offline;
-                }
+            if (!_disposed)
+            {
+                _tempo.Start();
+            }
+        }
+
+        /// <summary>
+        /// Decides if the service model should be the principal one among all services
+        /// belonging to the same group. Only one service with the same ServiceName+Environment
+        /// can be the principal one.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="allowPrincipalSet">Under the correct conditions allow setting Principal to true.</param>
+        private void EvaluatePrincipal(ServiceModel model, bool allowPrincipalSet)
+        {
+            string groupName = model.TokenPassingGroupName;
+
+            // if principal is no longer healthy or enabled.
+            if ((!model.Enabled || model.HealthState != EnumServiceHealth.Healthy) &&
+                model.Principal)
+            {
+                model.Principal = false;
+                _tokenPassingDictionary.TryRemove(groupName, out _);
+            }
+            // if there is no principal and this service is valid, make it principal.
+            else if (model.HealthState == EnumServiceHealth.Healthy &&
+                     model.Enabled &&
+                     allowPrincipalSet &&
+                     !_tokenPassingDictionary.ContainsKey(groupName))
+            {
+                model.Principal = true;
+                _tokenPassingDictionary.TryAdd(groupName, model.Id);
             }
 
-            ContinueUpdate();
+            string serviceName = model.ServiceName.ToLower();
+            if (!_cachedValid.ContainsKey(serviceName))
+            {
+                _cachedValid.TryAdd(serviceName, new ConcurrentDictionary<string, ServiceModel>());
+            }
+
+            // check if cache contains current model
+            bool contains = _cachedValid[serviceName].ContainsKey(model.Id);
+
+            if (model.Enabled &&
+                model.HealthState == EnumServiceHealth.Healthy &&
+                !contains)
+            {
+                _cachedValid[serviceName].TryAdd(model.Id, model);
+            }
+            else if (contains && (!model.Enabled || model.HealthState != EnumServiceHealth.Healthy))
+            {
+                _cachedValid[serviceName].TryRemove(model.Id, out _);
+            }
         }
 
         #endregion

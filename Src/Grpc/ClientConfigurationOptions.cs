@@ -5,6 +5,9 @@
     /// </summary>
     public class ClientConfigurationOptions
     {
+        /// <summary>
+        /// Initializes a new instance of the ClientConfigurationOptions class.
+        /// </summary>
         public ClientConfigurationOptions()
         {
             string local = StaticHelpers.GetLocalIpAddress();
@@ -23,8 +26,8 @@
         public int Port { get; set; } = 6000;
 
         /// <summary>
-        /// Host name of ip of discovery server service.
-        /// Client will used to make calls to it.
+        /// Host name or ip address of discovery server server/blazor api.
+        /// Client will used this address to make calls to it.
         /// If empty, then auto discover will be used automatically.
         /// </summary>
         public string DiscoveryServerHost { get; set; }

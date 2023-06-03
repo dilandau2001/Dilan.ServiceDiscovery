@@ -15,6 +15,9 @@ using Grpc.Core;
 
 namespace Dilan.GrpcServiceDiscovery.Grpc
 {
+    /// <summary>
+    /// Certificate Exporter.
+    /// </summary>
     public static class CertificateExporter
     {
         /// <summary>

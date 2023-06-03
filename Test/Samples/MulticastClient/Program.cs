@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using Dilan.GrpcServiceDiscovery.Grpc;
+// ReSharper disable AccessToDisposedClosure
 
 int port = 5478;
 string multicastGroup = "224.0.0.100";

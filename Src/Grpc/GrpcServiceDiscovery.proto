@@ -55,6 +55,9 @@ message ServiceDto
 
     // String that describes or relates several services belonging to the same environment.
     optional string Scope = 6;
+
+    // Flags the service as Principal.
+    optional bool Principal = 7;
 }
 
 // Response of the service request.
@@ -74,6 +77,11 @@ message RegisterServiceResponse
     // Error text.
     // When call response is false, may the server fill why.
     string Error = 4;
+
+    // Principal
+    // Flags the service as main service for the group.
+    // Only one service from the same group
+    bool Principal = 5;
 }
 
 // Name of the service to search.

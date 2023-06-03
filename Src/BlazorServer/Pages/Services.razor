@@ -24,6 +24,7 @@
         <th>Heath</th>
         <th>Metadata</th>
         <th>Last Update</th>
+        <th>Principal</th>
         <th>Enabled</th>
     </tr>
     </thead>
@@ -50,6 +51,7 @@
             <td style="background: @GetColorFromHealthState(item)">@item.HealthState</td>
             <td><pre>@GetStringMetadata(item)</pre></td>
             <td>@item.LastRefreshTime.LocalDateTime</td>
+            <td>@item.Principal</td>
             <td><input type="checkbox" @bind="@item.Enabled"></td>
         </tr>
     }

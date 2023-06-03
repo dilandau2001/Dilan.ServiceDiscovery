@@ -317,6 +317,9 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
 
         #region Overrides of UdpClient
 
+        /// <summary>
+        /// Performs application specific dispose.
+        /// </summary>
         public void Dispose()
         {
             StopService();

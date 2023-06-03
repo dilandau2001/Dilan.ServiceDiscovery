@@ -22,6 +22,7 @@ namespace Dilan.GrpcServiceDiscovery.BlazorServer.Pages
         public void OnGet()
         {
             RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+            _logger.LogDebug($"OnGet() -> {RequestId}");
         }
     }
 }

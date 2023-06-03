@@ -1,8 +1,7 @@
 ﻿namespace BlazorServerAppTests
 {
-    internal class Helper
+    internal static class Helper
     {
-        
         /// <summary>
         /// Configures and existing mocked logger to redirect output to an existing output helper.
         /// </summary>
@@ -11,30 +10,6 @@
         /// <param name="outputHelper">The output helper.</param>
         public static void ConfigureLogger<T>(Mock<ILogger<T>> logger, ITestOutputHelper outputHelper)
         {
-            Action<string, Exception, string, object[]> act = (level, a, b, c) =>
-            {
-                try
-                {
-                    outputHelper.WriteLine($"{DateTimeOffset.Now:HH:mm:ss.fff} - [{level}]= Exception={a}, Message={Format(b,c)}");
-                }
-                catch (Exception)
-                {
-                    // Ignore
-                }
-            };
-
-            Action<string, string, object[]> act2 = (level, b, c) =>
-            {
-                try
-                {
-                    outputHelper.WriteLine($"{DateTimeOffset.Now:HH:mm:ss.fff} - [{level}]= Message={Format(b,c)}");
-                }
-                catch (Exception)
-                {
-                    // Ignore
-                }
-            };
-
             logger.Setup(x => x.Log(
                     It.IsAny<LogLevel>(),
                     It.IsAny<EventId>(),
@@ -44,7 +19,8 @@
                 .Callback(
                     (LogLevel a, EventId b, T c, Exception d, Func<T, Exception?, string> e) =>
                     {
-
+                        var res = e.Invoke(c, d);
+                        outputHelper.WriteLine($"{DateTimeOffset.Now:HH:mm:ss.fff} - [{a}]= Message={res}");
                     });
             
             logger
@@ -74,7 +50,7 @@
             {
                 for (var i = 0; i < tokens.Count; i++)
                 {
-                    var arg = args[i] != null ? args[i].ToString() : "null";
+                    var arg = args[i].ToString();
                     result = result.Replace(tokens[i], arg);
                 }
             }

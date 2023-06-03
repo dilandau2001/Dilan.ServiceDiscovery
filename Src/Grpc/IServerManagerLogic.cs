@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 namespace Dilan.GrpcServiceDiscovery.Grpc
 {
+    /// <summary>
+    /// Server manager logic interface.
+    /// </summary>
     public interface IServerManagerLogic : IDisposable
     {
         /// <summary>
@@ -20,7 +23,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// Add or updates service list.
         /// </summary>
         /// <param name="dto"></param>
-        void AddOrUpdate(ServiceDto dto);
+        ServiceModel AddOrUpdate(ServiceDto dto);
 
         /// <summary>
         /// Returns the list of services that are healthy.
@@ -28,6 +31,6 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         /// <param name="serviceName"></param>
         /// <param name="scope"></param>
         /// <returns></returns>
-        List<ServiceDto> FindService(string serviceName, string scope = "");
+        List<ServiceModel> FindService(string serviceName, string scope = "");
     }
 }

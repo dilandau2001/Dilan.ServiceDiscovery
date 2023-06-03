@@ -6,21 +6,42 @@ using Microsoft.Extensions.Logging;
 
 namespace Dilan.GrpcServiceDiscovery.Grpc
 {
-    public class ScopeProvider : IDisposable
+    /// <summary>
+    /// Scope provider class.
+    /// Provides for scope to logger.
+    /// </summary>
+    public sealed class ScopeProvider : IDisposable
     {
+        /// <summary>
+        /// Gets the scopes.
+        /// </summary>
+        /// <value>
+        /// The scopes.
+        /// </value>
         public Queue<string> Scopes { get; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ScopeProvider"/> class.
+        /// </summary>
         public ScopeProvider()
         {
             Scopes = new Queue<string>();
         }
 
+        /// <summary>
+        /// Pushes the specified state.
+        /// </summary>
+        /// <param name="state">The state.</param>
+        /// <returns></returns>
         public IDisposable Push(string state)
         {
             Scopes.Enqueue(state);
             return this;
         }
 
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
         public void Dispose()
         {
             if (Scopes.Any())

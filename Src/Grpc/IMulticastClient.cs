@@ -3,6 +3,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Dilan.GrpcServiceDiscovery.Grpc
 {
+    /// <summary>
+    /// Multicast Client interface.
+    /// </summary>
     public interface IMulticastClient
     {
         /// <summary>

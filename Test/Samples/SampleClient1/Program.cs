@@ -1,4 +1,5 @@
-﻿using Dilan.GrpcServiceDiscovery.Grpc;
+﻿using System.Diagnostics;
+using Dilan.GrpcServiceDiscovery.Grpc;
 
 Console.WriteLine("Hello, World!");
 
@@ -17,6 +18,7 @@ var serviceName = Console.ReadLine();
 Console.WriteLine("Enter Port Number");
 var portText = Console.ReadLine();
 
+client.Options.DiscoveryServerHost = "localhost";
 client.Options.ServiceName = serviceName;
 client.Options.CallbackPort = int.Parse(portText ?? "5000");
 client.Options.Scope = "End1";
@@ -26,20 +28,25 @@ client.ExtraData["test"] = "hello";
 // this will raise 
 await client.Start();
 
-Console.WriteLine("1 for as for service");
+Console.WriteLine("1 for ask for service");
 Console.WriteLine("Press other to finish");
 string? s = Console.ReadLine();
 
 while (s=="1")
 {
-    var respone = await client.FindService(client.Options.ServiceName, client.Options.Scope);
+    Stopwatch w = new Stopwatch();
+    w.Start();
+    var response = await client.FindService(client.Options.ServiceName, string.Empty);
+    w.Stop();
 
-    foreach (var r in respone.Services)
+    foreach (var r in response.Services)
     {
         Console.WriteLine($"Found = {r.ServiceName}, {r.ServiceHost}, {r.ServicePort}, {r.Scope}");
     }
 
-    Console.WriteLine("1 for as for service");
+    Console.WriteLine("Request took: " + w.Elapsed.TotalMilliseconds + " ms.");
+
+    Console.WriteLine("1 for ask for service");
     s = Console.ReadLine();
 }
 

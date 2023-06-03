@@ -9,6 +9,7 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
     /// </summary>
     public class ServiceModel
     {
+        private string _id;
         private string _serviceName;
         private int _port;
         private string _address;
@@ -19,6 +20,16 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         private Dictionary<string, string> _metadata;
         private bool _enabled = true;
         private string _scope;
+        private bool _principal;
+
+        /// <summary>
+        /// Name of the registered service.
+        /// </summary>
+        public string Id
+        {
+            get => _id;
+            set => UpdateDirty(value, ref _id);
+        }
 
         /// <summary>
         /// Name of the registered service.
@@ -111,6 +122,27 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
         }
 
         /// <summary>
+        /// Gets or sets a variable indicating whether this service is considered principal.
+        /// Principal indicates that this service is the first enabled service in the environment.
+        /// Principal is only true for 1 service at a time. Principal flag is lost when service goes unhealthy.
+        /// (Token passing pattern)
+        /// </summary>
+        public bool Principal 
+        {
+            get => _principal;
+            set => UpdateDirty(value, ref _principal);
+        }
+
+        /// <summary>
+        /// Gets the name of the token passing group.
+        /// This name is in line of Principal. Only one service belonging to this group can be enabled as principal.
+        /// </summary>
+        /// <value>
+        /// The name of the token passing group.
+        /// </value>
+        public string TokenPassingGroupName => $"{ServiceName}_{Scope}";
+
+        /// <summary>
         /// True when a property is changed.
         /// </summary>
         public bool Dirty { get; set; }
@@ -172,6 +204,10 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             }
         }
 
+        /// <summary>
+        /// Converts model to ServiceDto.
+        /// </summary>
+        /// <returns></returns>
         public ServiceDto ToServiceDto()
         {
             return new ServiceDto
@@ -181,8 +217,20 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
                 ServicePort = _port,
                 HealthState = _state,
                 Scope = _scope,
+                Principal = _principal,
                 Metadata = { _metadata }
             };
         }
+
+        #region Overrides of Object
+
+        /// <summary>Returns a string that represents the current object.</summary>
+        /// <returns>A string that represents the current object.</returns>
+        public override string ToString()
+        {
+            return $"[{Id}, Enabled={Enabled}, Principal={Principal}]";
+        }
+
+        #endregion
     }
 }

@@ -20,6 +20,11 @@
                     ServicePort = 5000,
                     Metadata = { {"test1", "value1"} }
                 };
+
+                managerMock.Setup(n => n.AddOrUpdate(dto1)).Returns(() => new ServiceModel()
+                {
+                    Id = "id"
+                });
                 
                 // Act
                 var res = await sut.RegisterService(dto1, null);

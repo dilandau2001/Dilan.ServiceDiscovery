@@ -42,23 +42,22 @@ namespace BlazorServerAppTests
             return _scopeProvider.Push(state);
         }
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception, string> formatter)
         {
             var sb = new StringBuilder();
             sb.Append(GetLogLevelString(logLevel))
               .Append(" [").Append(_categoryName).Append("] ");
 
             // Append scopes
-            _scopeProvider.ForEachScope((scope, state) =>
+            _scopeProvider.ForEachScope((scope, state1) =>
             {
-                state.Append(" => ");
-                state.Append(scope);
+                state1.Append(" => ");
+                state1.Append(scope);
             }, sb);
 
             if (exception != null)
             {
                 sb.Append(exception);
-                
             }
 
             sb.Append(state);

@@ -123,6 +123,12 @@ namespace Dilan.GrpcServiceDiscovery.Grpc
             return result;
         }
 
+        /// <summary>
+        /// Get next available port starting from the given one.
+        /// </summary>
+        /// <param name="startingPort"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public static int GetAvailablePort(int startingPort)
         {
             if (startingPort > ushort.MaxValue) throw new ArgumentException($"Can't be greater than {ushort.MaxValue}", nameof(startingPort));
