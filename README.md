@@ -7,7 +7,7 @@
 ![Code Coverage](https://img.shields.io/badge/Code%20Coverage-70%25-yellow?style=flat)
 
 This library provides a fast, easy to setup way to implement a discovery service pattern within any .NET solution/project.
-Although there are several other more complex solutions out there that you might have consider, this one of mine have some features you might find matching your problem
+Although there are several other more complex solutions out there that you might have considered, this one of mine have some features you might find matching your problem
 as it matched mine.
 - This library is fully developed in C# for both server and client sides.
 - The library itself is netstandard 2.0, which means it is compatible with both full framework and Core frameworks up to now.
@@ -37,7 +37,7 @@ The BlazorServer that is also available in this library is just a front end of t
 
 ## Background
 
-The need for this library came from a project I was working on where we had several web apps that were develop using Core 2.0. Those appps were dependant on Microsoft
+The need for this library came from a project I was working on where we had several web apps that were develop using Core 2.0. Those apps were dependant on Microsoft
 core web app packages. In this project we also had some services running as windows service, using framework 4.8 and we were lucky or unlucky to share several common libraries as those services were also making use of Microsoft web packages for health checks.
 Due to cybersecurity reasons we were forced to upgrade our web apps to updated versions of Core.Web libraries, which seemed to be impossible without destroying many things, because new libraries were not compatible with 4.8 framework.
 
