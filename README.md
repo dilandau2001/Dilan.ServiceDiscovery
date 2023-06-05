@@ -16,6 +16,7 @@ as it matched mine.
 - This library is coded having dependency injection in mind. Most behaviours can be configured and changed by modifying registered items in whatever injection framework you decide to use.
 - This library comes with an auto-discover logic that reduces the number of parameters to be configured.
 - This library supports SSL security.
+- Prepared for Dockerization
 
 
 Dependencies:
@@ -389,7 +390,6 @@ PRs accepted and I will be really greatfull for them.
 There are several things I haven't addressed yet.
 - Create a DNS resolver logic. Current implemtentation allows you to ask discovery server for the list of services that matches your request. The idea of this feature
 would be to make the server give you the "best" one, where the best should follow a configured logic. In other words, the server would potentially become a load balancer.
-- prepare the BlazorServer app dockerization file. Currently learning about it.
 - The Blazor server app is using default Visual studio styling and it would be nice to make it "different".
 - The blazor server app has a initial page that is empty. I am still thinking what to put there.
 
