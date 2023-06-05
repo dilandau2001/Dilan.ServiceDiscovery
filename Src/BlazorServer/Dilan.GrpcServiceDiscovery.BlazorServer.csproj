@@ -5,7 +5,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 	  <Version>1.0.2</Version>
+	  <UserSecretsId>e49d6be2-2764-460e-bed5-0ba5fe34dc39</UserSecretsId>
+	  <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	  <DockerfileContext>..\..</DockerfileContext>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.18.1" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Grpc\Dilan.GrpcServiceDiscovery.Grpc.csproj" />

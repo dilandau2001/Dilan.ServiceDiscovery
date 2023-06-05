@@ -35,6 +35,8 @@ namespace Dilan.GrpcServiceDiscovery.BlazorServer.Data
             {
                 _server.ServiceDictionary.TryRemove(kvp.Key, out _);
             }
+
+            ServiceModelListChanged?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
